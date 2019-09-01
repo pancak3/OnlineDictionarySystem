@@ -2,14 +2,22 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="591b90a6-2b0f-4241-8ab1-1d4e1229667e" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/dataSources.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/Server.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/VirtualDB.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/artifacts/COMP90015_2019_SM2_Distributed_Systems_Assignment1_jar.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/bin/UDPServer.jar" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/Database/Database.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/Database/User.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/Database/Word.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/UDPClient/MANIFEST.MF" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/UDPClient/UDPClient.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/UDPClient/UDPClient.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/UDPServer/MANIFEST.MF" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/UDPServer/UDPServer.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/UDPServer/UDPServer.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/UDPServer/server.jar" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/COMP90015_2019_SM2-Distributed-Systems-Assignment1/server.class" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/resources/SQLite" beforeDir="false" afterPath="$PROJECT_DIR$/resources/SQLite" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/server.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Server.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/VirtualDB.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Database/Database.java" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -66,18 +74,23 @@
     <ConfirmationsSetting value="2" id="Add" />
   </component>
   <component name="PropertiesComponent">
+    <property name="ASKED_ADD_EXTERNAL_FILES" value="true" />
     <property name="DatabaseDriversLRU" value="sqlite" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="ToolWindowCoverage.ShowToolbar" value="false" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="aspect.path.notification.shown" value="true" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$/lib/sqlite-jdbc-3.27.2.1.jar!/" />
-    <property name="project.structure.last.edited" value="Libraries" />
-    <property name="project.structure.proportion" value="0.0" />
-    <property name="project.structure.side.proportion" value="0.0" />
+    <property name="project.structure.last.edited" value="Artifacts" />
+    <property name="project.structure.proportion" value="0.15616544" />
+    <property name="project.structure.side.proportion" value="0.25726143" />
     <property name="settings.editor.selected.configurable" value="preferences.keymap" />
   </component>
   <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/src/UDPClient" />
+      <recent name="$PROJECT_DIR$/src/UDPServer" />
+    </key>
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/lib" />
     </key>
@@ -94,33 +107,25 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Application.VirtualDB">
-    <configuration name="COMP90015_2019_SM2-Distributed-Systems-Assignment1" type="Application" factoryName="Application" temporary="true">
-      <option name="MAIN_CLASS_NAME" value="Server" />
+  <component name="RunManager" selected="Application.UDPServer">
+    <configuration name="UDPClient" type="Application" factoryName="Application" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="UDPClient.UDPClient" />
       <module name="COMP90015_2019_SM2-Distributed-Systems-Assignment1" />
-      <RunnerSettings RunnerId="Run" />
-      <ConfigurationWrapper RunnerId="Run" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="VirtualDB" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="VirtualDB" />
+    <configuration name="UDPServer" type="Application" factoryName="Application" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="UDPServer.UDPServer" />
       <module name="COMP90015_2019_SM2-Distributed-Systems-Assignment1" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
     <list>
-      <item itemvalue="Application.COMP90015_2019_SM2-Distributed-Systems-Assignment1" />
-      <item itemvalue="Application.VirtualDB" />
+      <item itemvalue="Application.UDPClient" />
+      <item itemvalue="Application.UDPServer" />
     </list>
-    <recent_temporary>
-      <list>
-        <item itemvalue="Application.VirtualDB" />
-        <item itemvalue="Application.COMP90015_2019_SM2-Distributed-Systems-Assignment1" />
-      </list>
-    </recent_temporary>
   </component>
   <component name="ServiceViewManager">
     <option name="allServicesViewState">
@@ -176,33 +181,21 @@
       </map>
     </option>
   </component>
+  <component name="VcsManagerConfiguration">
+    <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
+  </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/VirtualDB.java</url>
+          <url>file://$PROJECT_DIR$/src/Database/Database.java</url>
           <line>43</line>
           <option name="timeStamp" value="4" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/VirtualDB.java</url>
-          <line>147</line>
-          <option name="timeStamp" value="8" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/VirtualDB.java</url>
-          <line>148</line>
-          <option name="timeStamp" value="9" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/VirtualDB.java</url>
-          <line>149</line>
-          <option name="timeStamp" value="10" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/VirtualDB.java</url>
-          <line>150</line>
-          <option name="timeStamp" value="11" />
+          <url>file://$PROJECT_DIR$/src/UDPServer/UDPServer.java</url>
+          <line>39</line>
+          <option name="timeStamp" value="12" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

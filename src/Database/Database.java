@@ -1,5 +1,10 @@
+
+package Database;
+
 import com.sun.source.tree.NewArrayTree;
 
+import javax.print.attribute.standard.DateTimeAtProcessing;
+import java.io.IOException;
 import java.lang.reflect.Array;
 import java.security.cert.TrustAnchor;
 import java.util.ArrayList;
@@ -29,7 +34,7 @@ class Word {
     int idx;
     String wordName, wordType, meaning;
 
-    public Word(int idx, String wordName, String wordType, String meaning) {
+    Word(int idx, String wordName, String wordType, String meaning) {
         this.idx = idx;
         this.wordName = wordName;
         this.wordType = wordType;
@@ -37,11 +42,14 @@ class Word {
     }
 }
 
-public class VirtualDB {
-    Connection conn = connect();
+public class Database {
+    private Connection conn = connect();
     private final static Logger logger = Logger.getLogger("virtualDB");
 
-    private Connection connect() {
+    public Database() throws SQLException {
+    }
+
+    private Connection connect() throws SQLException {
         Connection conn = null;
         try {
             String url = "jdbc:sqlite:./resources/SQLite";
@@ -50,22 +58,24 @@ public class VirtualDB {
 
         } catch (SQLException e) {
             logger.warning(e.getMessage());
+            throw e;
         }
         return conn;
     }
 
-    private void closeConn(Connection conn) {
+    private void closeConn(Connection conn) throws SQLException {
         try {
             if (conn != null) {
                 conn.close();
             }
-        } catch (SQLException ex) {
-            logger.warning(ex.getMessage());
+        } catch (SQLException e) {
+            logger.warning(e.getMessage());
+            throw e;
         }
         logger.info("[*] connection closed");
     }
 
-    private List<Word> queryWord(String wordName) {
+    private List<Word> queryWord(String wordName) throws SQLException {
         List<Word> wordList = new ArrayList<Word>();
         Word word = new Word(0, null, null, null);
         String sql = "select * from words where wordName=\"" + wordName + '"';
@@ -83,13 +93,14 @@ public class VirtualDB {
 
         } catch (SQLException e) {
             logger.warning(e.getMessage());
+            throw e;
         }
         logger.info("[-] queried word: " + wordName + ". ");
         return wordList;
     }
 
 
-    private Boolean addWord(String wordName, String wordType, String meaning) {
+    private Boolean addWord(String wordName, String wordType, String meaning) throws SQLException {
         String sql = "insert into words (wordName,wordType,meaning) values(?,?,?)";
         try (
                 PreparedStatement pstmt = this.conn.prepareStatement(sql)) {
@@ -99,13 +110,13 @@ public class VirtualDB {
             pstmt.executeUpdate();
         } catch (SQLException e) {
             logger.warning(e.getMessage());
-            return false;
+            throw e;
         }
         logger.info("[-] added word: " + wordName + ". ");
         return true;
     }
 
-    private Boolean editWord(int idx, String wordName, String wordType, String meaning) {
+    private Boolean editWord(int idx, String wordName, String wordType, String meaning) throws SQLException {
         String sql = "update words set wordName = ? , "
                 + "wordType = ? ,  "
                 + "meaning = ? "
@@ -120,13 +131,13 @@ public class VirtualDB {
             pstmt.executeUpdate();
         } catch (SQLException e) {
             logger.warning(e.getMessage());
-            return false;
+            throw e;
         }
         logger.info("[-] edited word: " + wordName + ". ");
         return true;
     }
 
-    private Boolean removeWord(int idx) {
+    private Boolean removeWord(int idx) throws SQLException {
         String sql = "delete from words where idx = ?";
 
         try (
@@ -135,19 +146,19 @@ public class VirtualDB {
             pstmt.executeUpdate();
         } catch (SQLException e) {
             logger.warning(e.getMessage());
-            return false;
+            throw e;
         }
         logger.info("[-] removed word: " + idx + ". ");
         return true;
     }
 
-    public static void main(String[] args) {
-        // write your code here
-        VirtualDB db = new VirtualDB();
-        db.queryWord("apple");
-        db.addWord("banana","noun","another kind of fruit");
-        db.editWord(3,"banana", "noun", "very different from apple");
-        db.removeWord(3);
-        db.closeConn(db.conn);
-    }
+//    public static void main(String[] args) {
+//        // write your code here
+//        Database db = new Database();
+//        db.queryWord("apple");
+//        db.addWord("banana", "noun", "another kind of fruit");
+//        db.editWord(3, "banana", "noun", "very different from apple");
+//        db.removeWord(3);
+//        db.closeConn(db.conn);
+//    }
 }
