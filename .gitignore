@@ -1,1 +1,10 @@
 out
+.idea/workspace.xml
+lib/Database.jar
+src/Database/Database.class
+src/Database/Database.jar
+src/Database/User.class
+src/Database/Word.class
+src/UDPClient.jar
+src/UDPServer.jar
+src/UDPServer.java

@@ -1,12 +1,3 @@
-
-package Database;
-
-import com.sun.source.tree.NewArrayTree;
-
-import javax.print.attribute.standard.DateTimeAtProcessing;
-import java.io.IOException;
-import java.lang.reflect.Array;
-import java.security.cert.TrustAnchor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.*;
@@ -152,13 +143,13 @@ public class Database {
         return true;
     }
 
-//    public static void main(String[] args) {
-//        // write your code here
+    public static void main(String[] args) {
+        // write your code here
 //        Database db = new Database();
 //        db.queryWord("apple");
 //        db.addWord("banana", "noun", "another kind of fruit");
 //        db.editWord(3, "banana", "noun", "very different from apple");
 //        db.removeWord(3);
 //        db.closeConn(db.conn);
-//    }
+    }
 }

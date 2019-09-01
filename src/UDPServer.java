@@ -1,6 +1,3 @@
-
-package UDPServer;
-
 import java.sql.SQLException;
 import java.util.logging.*;
 
@@ -10,7 +7,7 @@ import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.io.IOException;
 
-import Database.Database;
+import Database.*;
 
 public class UDPServer {
     private final static Logger logger = Logger.getLogger("UDPServer");
