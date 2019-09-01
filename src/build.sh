@@ -1,9 +1,9 @@
 echo -e "[*] Building Database ... \c"
 #compile Database
-DATABASE_PATH="./Database/"
+DATABASE_PATH="./"
 javac $DATABASE_PATH/Database.java
-jar cfm $DATABASE_PATH/Database.jar $DATABASE_PATH/MANIFEST.MF $DATABASE_PATH/Database.class
-cp $DATABASE_PATH/Database.jar ../lib/
+jar cfm $DATABASE_PATH/Database.jar $DATABASE_PATH/MANIFEST-DATABASE.MF $DATABASE_PATH/Database.class
+#cp $DATABASE_PATH/Database.jar ../lib/
 echo -e "done."
 
 echo -e "[*] Building UDPServer ... \c"

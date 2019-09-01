@@ -6,9 +6,6 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.io.IOException;
-
-import Database.*;
-
 public class UDPServer {
     private final static Logger logger = Logger.getLogger("UDPServer");
 

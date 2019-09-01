@@ -1,4 +1,4 @@
 Manifest-Version: 1.0
 Main-Class: UDPServer
-Class-Path: sqlite-jdbc-3.27.2.1.jar Database/Database.jar
+Class-Path: Database.jar
 
