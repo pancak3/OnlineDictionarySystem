@@ -43,7 +43,7 @@ public class Database {
     private Connection connect() throws SQLException {
         Connection conn = null;
         try {
-            String url = "jdbc:sqlite:./resources/SQLite";
+            String url = "jdbc:sqlite:../resources/SQLite";
             conn = DriverManager.getConnection(url);
             logger.info("Connection to SQLite has been established.");
 

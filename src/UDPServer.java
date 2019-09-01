@@ -6,6 +6,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.io.IOException;
+
 public class UDPServer {
     private final static Logger logger = Logger.getLogger("UDPServer");
 
@@ -31,7 +32,7 @@ public class UDPServer {
                 serverSocket.receive(requestPacket);
 
                 String requestContent = new String(requestPacket.getData());
-                logger.info("Received" + requestContent.length() + ": " + requestContent);
+                logger.info("Received " + requestContent.length() + " length:\r\n   " + requestContent);
 
 
                 //Get client attributes from the received data
