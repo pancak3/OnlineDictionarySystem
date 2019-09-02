@@ -1,0 +1,83 @@
+import java.sql.SQLException;
+import java.util.logging.*;
+
+import java.net.InetAddress;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.io.IOException;
+import Database.*;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+
+public class UDPServer {
+    private final static Logger logger = Logger.getLogger("UDPServer");
+
+    public static void main(String[] args) throws IOException {
+        int UDPPort = 9884;
+        try (DatagramSocket serverSocket = new DatagramSocket(UDPPort)) {
+            try {
+                Database db = new Database();
+            } catch (SQLException e) {
+                logger.warning(e.getMessage());
+            }
+
+            //Listen for incoming connections for ever
+            while (true) {
+
+                byte[] receiveData = new byte[1024];
+//                System.out.println("This is  UDP server- Waiting for data to receive");
+                logger.info("UDP server started at port: " + UDPPort);
+                // Create a receive Datagram packet and receive through socket
+                DatagramPacket requestPacket = new DatagramPacket(receiveData, receiveData.length);
+                serverSocket.receive(requestPacket);
+
+                String requestContent = new String(requestPacket.getData());
+                requestContent = "{action:\"query\",data:{wordName:\"apple\"}}";
+                logger.info("Received " + requestContent.length() + " length:\r\n   " + requestContent);
+
+                logger.info("handling");
+
+                JSONObject requestJson = new JSONObject();
+                try {
+                    requestJson = handleRequest(requestContent);
+
+                } catch (Exception e) {
+                    logger.warning(e.getMessage());
+                }
+                //push this request in queue
+                //and send request received confirmation back
+
+                logger.info("Got legal request: " + requestJson.toJSONString());
+
+
+                //Get client attributes from the received data
+                InetAddress clientAddressUDP = requestPacket.getAddress();
+                int clientPortUDP = requestPacket.getPort();
+                String responseContent = requestContent.toUpperCase();
+                byte[] responseBytes = responseContent.getBytes();
+
+                //Create a send Datagram packet and send through socket
+                DatagramPacket responsePacket = new DatagramPacket(responseBytes, responseBytes.length, clientAddressUDP, clientPortUDP);
+                serverSocket.send(responsePacket);
+
+            }
+        } catch (IOException e) {
+            logger.warning(e.getMessage());
+            throw e;
+        }
+
+    }
+
+    private static JSONObject handleRequest(String requestContent) throws Exception {
+        JSONObject requestJSON;
+        try {
+            JSONParser parser = new JSONParser();
+            requestJSON = (JSONObject) parser.parse(requestContent);
+
+        } catch (Exception e) {
+            logger.warning(e.getMessage());
+            throw e;
+        }
+        return requestJSON;
+    }
+}

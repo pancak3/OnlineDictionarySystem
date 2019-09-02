@@ -1,6 +1,6 @@
 out
 bin
 .idea/workspace.xml
-lib/Database.jar
-src/*.jar
-src/*.class
+UDPServer/*.class
+UDPServer/Database/*.class
+UDPClient/*.class

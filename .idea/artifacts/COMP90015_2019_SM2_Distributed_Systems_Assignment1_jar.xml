@@ -5,7 +5,6 @@
       <element id="archive" name="COMP90015_2019_SM2-Distributed-Systems-Assignment1.jar">
         <element id="module-output" name="COMP90015_2019_SM2-Distributed-Systems-Assignment1" />
       </element>
-      <element id="library" level="project" name="sqlite-jdbc-3.27.2.1" />
     </root>
   </artifact>
 </component>
