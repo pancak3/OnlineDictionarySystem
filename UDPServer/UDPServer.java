@@ -5,14 +5,20 @@ import java.net.InetAddress;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.io.IOException;
+
 import Database.*;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+
+import java.io.File;
 
 public class UDPServer {
     private final static Logger logger = Logger.getLogger("UDPServer");
 
     public static void main(String[] args) throws IOException {
+        //for print Class-Path
+//        final File f = new File(UDPServer.class.getProtectionDomain().getCodeSource().getLocation().getPath());
+//        logger.info(f.toString());
         int UDPPort = 9884;
         try (DatagramSocket serverSocket = new DatagramSocket(UDPPort)) {
             try {

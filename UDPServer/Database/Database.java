@@ -1,5 +1,6 @@
 package Database;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.*;
@@ -10,6 +11,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.PreparedStatement;
+
 
 class User {
     int uid;
@@ -38,14 +40,17 @@ class Word {
 public class Database {
     private Connection conn = connect();
     private final static Logger logger = Logger.getLogger("virtualDB");
+    String SQL_FILE_PATH = "../resources/SQLite";
+
 
     public Database() throws SQLException {
     }
 
     private Connection connect() throws SQLException {
+
         Connection conn = null;
         try {
-            String url = "jdbc:sqlite:../resources/SQLite";
+            String url = "jdbc:sqlite:" + SQL_FILE_PATH;
             conn = DriverManager.getConnection(url);
             logger.info("Connection to SQLite has been established.");
 

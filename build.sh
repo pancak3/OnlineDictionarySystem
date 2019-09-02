@@ -10,12 +10,20 @@ echo "done."
 echo -e "[*] Compiling UDPServer ... \c"
 UDPSERVER_PATH="./UDPServer"
 javac -cp \
-  ./lib/sqlite-jdbc-3.27.2.1.jar:./lib/json-simple-1.1.1.jar:./$UDPSERVER_PATH \
+  ./bin/sqlite-jdbc-3.27.2.1.jar:./bin/json-simple-1.1.1.jar:./$UDPSERVER_PATH \
   $UDPSERVER_PATH/UDPServer.java
+
+
+
 jar --create \
   --file $BIN_PATH/UDPServer.jar \
-  --main-class UDPServer \
-  -C $UDPSERVER_PATH .
+  --manifest $UDPSERVER_PATH/MANIFEST.MF \
+  $UDPSERVER_PATH/Database/Database.class \
+  $UDPSERVER_PATH/Database/User.class \
+  $UDPSERVER_PATH/Database/Word.class \
+  -C $UDPSERVER_PATH UDPServer.class
+
+
 echo -e "done."
 
 #compile UDPClient
@@ -27,5 +35,5 @@ javac -cp \
 jar --create \
   --file $BIN_PATH/UDPClient.jar \
   --main-class UDPClient \
-  -C $UDPSERVER_PATH .
+  -C $UDPSERVER_PATH UDPClient.class
 echo -e "done."
