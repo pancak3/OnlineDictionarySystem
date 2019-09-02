@@ -1,14 +1,14 @@
+import java.net.*;
+import java.rmi.UnexpectedException;
 import java.sql.SQLException;
 import java.util.logging.*;
 
-import java.net.InetAddress;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 import java.io.IOException;
 
 import Database.*;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 import java.io.File;
 
@@ -38,7 +38,7 @@ public class UDPServer {
                 serverSocket.receive(requestPacket);
 
                 String requestContent = new String(requestPacket.getData());
-                requestContent = "{action:\"query\",data:{wordName:\"apple\"}}";
+                requestContent = "{\"action\":\"query\",\"data\":{\"wordName\":\"apple\"}}";
                 logger.info("Received " + requestContent.length() + " length:\r\n   " + requestContent);
 
                 logger.info("handling");
@@ -47,8 +47,9 @@ public class UDPServer {
                 try {
                     requestJson = handleRequest(requestContent);
 
-                } catch (Exception e) {
+                } catch (ParseException e) {
                     logger.warning(e.getMessage());
+                    //tell client its an illegal request
                 }
                 //push this request in queue
                 //and send request received confirmation back
@@ -64,26 +65,32 @@ public class UDPServer {
 
                 //Create a send Datagram packet and send through socket
                 DatagramPacket responsePacket = new DatagramPacket(responseBytes, responseBytes.length, clientAddressUDP, clientPortUDP);
-                serverSocket.send(responsePacket);
+                try {
+                    serverSocket.send(responsePacket);
 
+                } catch (IOException e) {
+                    logger.warning(e.getMessage());
+                    throw e;
+                }
             }
-        } catch (IOException e) {
-            logger.warning(e.getMessage());
-            throw e;
+        } catch (BindException e) {
+            logger.warning("Port: " + UDPPort + " -> " + e.getMessage());
+            System.exit(0);
         }
 
     }
 
-    private static JSONObject handleRequest(String requestContent) throws Exception {
+    private static JSONObject handleRequest(String requestContent) throws ParseException {
         JSONObject requestJSON;
         try {
             JSONParser parser = new JSONParser();
             requestJSON = (JSONObject) parser.parse(requestContent);
 
-        } catch (Exception e) {
+        } catch (ParseException e) {
             logger.warning(e.getMessage());
             throw e;
         }
         return requestJSON;
     }
+
 }

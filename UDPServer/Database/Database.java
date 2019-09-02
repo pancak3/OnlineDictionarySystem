@@ -40,7 +40,7 @@ class Word {
 public class Database {
     private Connection conn = connect();
     private final static Logger logger = Logger.getLogger("virtualDB");
-    String SQL_FILE_PATH = "../resources/SQLite";
+    String SQL_FILE_PATH = "./SQLite";
 
 
     public Database() throws SQLException {
@@ -48,7 +48,7 @@ public class Database {
 
     private Connection connect() throws SQLException {
 
-        Connection conn = null;
+        Connection conn;
         try {
             String url = "jdbc:sqlite:" + SQL_FILE_PATH;
             conn = DriverManager.getConnection(url);
