@@ -11,14 +11,16 @@ import java.util.logging.*;
 
 public class UDPClient {
     private final static Logger logger = Logger.getLogger("UDPClient");
+    private final static String UDP_SERVER_ADDR = "localhost";
+    private final static int UDP_SERVER_PORT = 7397;
 
     public static void main(String args[]) throws IOException {
 
         DatagramSocket clientSocket = null;
-        InetAddress ServerAddressUDP = InetAddress.getByName("localhost");
-        int serverPortUDP = 9884;
+        InetAddress ServerAddressUDP = InetAddress.getByName(UDP_SERVER_ADDR);
+        int serverPortUDP = UDP_SERVER_PORT;
         try {
-            logger.info("UDPClient stated.");
+            logger.info("UDPClient stated with UDP_SERVER info -> " + UDP_SERVER_ADDR + ":" + UDP_SERVER_PORT);
 //            System.out.println("This is UDP Client- Enter some text to send to the UDP server");
             BufferedReader inFromUser = new BufferedReader(new InputStreamReader(System.in));
 

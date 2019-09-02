@@ -14,7 +14,6 @@ import java.sql.Statement;
 import java.sql.PreparedStatement;
 
 
-
 class User {
     int uid;
     String username, password, group;
@@ -45,20 +44,16 @@ public class Database {
     String SQL_FILE_PATH = "./SQLite";
 
 
-    public Database() throws SQLException {
-    }
+    private Connection connect() {
 
-    private Connection connect() throws SQLException {
-
-        Connection conn;
+        Connection conn = null;
         try {
             String url = "jdbc:sqlite:" + SQL_FILE_PATH;
             conn = DriverManager.getConnection(url);
             logger.info("Connection to SQLite has been established.");
-
         } catch (SQLException e) {
             logger.warning(e.getMessage());
-            throw e;
+            System.exit(0);
         }
         return conn;
     }
