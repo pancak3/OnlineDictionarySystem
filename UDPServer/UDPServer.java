@@ -1,6 +1,11 @@
 import java.net.*;
-import java.rmi.UnexpectedException;
 import java.sql.SQLException;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.LinkedList;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.*;
 
 import java.io.IOException;
@@ -14,29 +19,41 @@ import java.io.File;
 
 public class UDPServer {
     private final static Logger logger = Logger.getLogger("UDPServer");
+    ;
 
     public static void main(String[] args) throws IOException {
         //for print Class-Path
 //        final File f = new File(UDPServer.class.getProtectionDomain().getCodeSource().getLocation().getPath());
 //        logger.info(f.toString());
-        int UDPPort = 9884;
-        try (DatagramSocket serverSocket = new DatagramSocket(UDPPort)) {
+        int UDP_PORT = 9884;
+        int QUEUE_SIZE = 20;
+        try {
             try {
                 Database db = new Database();
             } catch (SQLException e) {
                 logger.warning(e.getMessage());
             }
 
-            //Listen for incoming connections for ever
-            while (true) {
+            BlockingQueue<DatagramPacket> requestQueue = new LinkedBlockingQueue<>(QUEUE_SIZE);
+            BlockingQueue<DatagramPacket> receivedConfirmation = new LinkedBlockingQueue<>(QUEUE_SIZE);
 
+            //Listen for incoming connections for ever
+            DatagramSocket serverSocket = new DatagramSocket(UDP_PORT);
+            logger.info("UDP server started at port: " + UDP_PORT);
+
+            while (true) {
                 byte[] receiveData = new byte[1024];
-//                System.out.println("This is  UDP server- Waiting for data to receive");
-                logger.info("UDP server started at port: " + UDPPort);
                 // Create a receive Datagram packet and receive through socket
                 DatagramPacket requestPacket = new DatagramPacket(receiveData, receiveData.length);
                 serverSocket.receive(requestPacket);
+                try {
+                    requestQueue.put(requestPacket);
+                    receivedConfirmation.put(requestPacket);
+                    logger.info("Put request and confirmation task in queues");
 
+                } catch (Exception e) {
+                    logger.warning(e.getMessage());
+                }
                 String requestContent = new String(requestPacket.getData());
                 requestContent = "{\"action\":\"query\",\"data\":{\"wordName\":\"apple\"}}";
                 logger.info("Received " + requestContent.length() + " length:\r\n   " + requestContent);
@@ -51,6 +68,7 @@ public class UDPServer {
                     logger.warning(e.getMessage());
                     //tell client its an illegal request
                 }
+
                 //push this request in queue
                 //and send request received confirmation back
 
@@ -74,7 +92,7 @@ public class UDPServer {
                 }
             }
         } catch (BindException e) {
-            logger.warning("Port: " + UDPPort + " -> " + e.getMessage());
+            logger.warning("Port: " + UDP_PORT + " -> " + e.getMessage());
             System.exit(0);
         }
 
