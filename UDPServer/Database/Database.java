@@ -63,7 +63,8 @@ public class Database {
         }
         logger.info("[*] connection closed");
     }
-
+    //to remove warning both in IJ and compile, but guess there is better way to use Json
+    @SuppressWarnings("unchecked")
     public JSONObject queryWord(String wordName) throws SQLException {
         List<Word> wordList = new ArrayList<Word>();
         String sql = "select * from words where wordName=\"" + wordName + '"';

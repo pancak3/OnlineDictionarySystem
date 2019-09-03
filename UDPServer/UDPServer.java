@@ -2,8 +2,8 @@ import java.net.*;
 import java.sql.SQLException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.*;
-
 import java.io.IOException;
 
 import Database.*;
@@ -11,17 +11,35 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+//to remove warning both in IJ and compile, but guess there is better way to use Json
+@SuppressWarnings("unchecked")
 
 public class UDPServer {
     private final static int UDP_PORT = 7397;
     private final static int QUEUE_SIZE = 42;
     private final static int HANDLER_POOL_SIZE = 10;
     private final static int CONFIRMOR_POOL_SIZE = 10;
+    private final static int TASK_RESPOND_CYCLE_MILLIS = 100;
+    private final static int MAX_RESPOND_TIMES = 30;
+
+    static class ResponseTask {
+        DatagramPacket respondPacket;
+        long timestamp;
+        int handledTimes;
+
+        ResponseTask(DatagramPacket respondPacket, long timestamp, int handledTimes) {
+            this.respondPacket = respondPacket;
+            this.timestamp = timestamp;
+            this.handledTimes = handledTimes;
+        }
+    }
+
     private final static BlockingQueue<DatagramPacket> requestQueue = new LinkedBlockingQueue<>(QUEUE_SIZE);
     private final static BlockingQueue<DatagramPacket> requestIllegalQueue = new LinkedBlockingQueue<>(QUEUE_SIZE);
-    private final static BlockingQueue<DatagramPacket> respondQueue = new LinkedBlockingQueue<>(QUEUE_SIZE);
+    private final static BlockingQueue<ResponseTask> respondQueue = new LinkedBlockingQueue<>(QUEUE_SIZE);
     private final static BlockingQueue<DatagramPacket> requestConfirmationQueue = new LinkedBlockingQueue<>(QUEUE_SIZE);
     private final static BlockingQueue<DatagramPacket> respondConfirmationQueue = new LinkedBlockingQueue<>(QUEUE_SIZE);
+    private final static CopyOnWriteArrayList<String> respondConfirmationList = new CopyOnWriteArrayList<String>();
     private final static Database db = new Database();
 
     private final static Logger logger = Logger.getLogger("UDPServer");
@@ -29,17 +47,8 @@ public class UDPServer {
     public static void main(String[] args) throws IOException {
         // start receiver
         new Thread(new receiver(), "Receiver").start();
-        // start handler pool
-        for (int i = 0; i < HANDLER_POOL_SIZE; i++) {
-            new Thread(new handler(), "Handler-" + i).start();
-        }
-        // start confirmor pool
-        for (int i = 0; i < CONFIRMOR_POOL_SIZE; i++) {
-            new Thread(new confirmor(), "Confirmor-" + i).start();
-        }
-
-
     }
+
 
     static class receiver implements Runnable {
         private final static Logger logger = Logger.getLogger("receiver");
@@ -47,8 +56,18 @@ public class UDPServer {
         public void run() {
             try {
 
-                DatagramSocket serverSocket = new DatagramSocket(UDP_PORT);
+                DatagramSocket receiverSocket = new DatagramSocket(UDP_PORT);
                 logger.info("UDP server started at port: " + UDP_PORT);
+
+                // start confirmor pool
+                new Thread(new confirmor(), "Confirmor-").start();
+                //start responder
+                new Thread(new responder(), "Responder-").start();
+
+                // start handler pool
+                for (int i = 0; i < HANDLER_POOL_SIZE; i++) {
+                    new Thread(new handler(), "Handler-" + i).start();
+                }
 
                 while (true) {
                     byte[] receiveData = new byte[1024];
@@ -56,7 +75,7 @@ public class UDPServer {
                     DatagramPacket requestPacket = new DatagramPacket(receiveData, receiveData.length);
 
                     try {
-                        serverSocket.receive(requestPacket);
+                        receiverSocket.receive(requestPacket);
                         requestQueue.put(requestPacket);
                         requestConfirmationQueue.put(requestPacket);
                         logger.info("Put request and confirmation task in queues");
@@ -73,8 +92,10 @@ public class UDPServer {
         }
     }
 
+
     static class handler implements Runnable {
         private final static Logger logger = Logger.getLogger("handler");
+
 
         public void run() {
             try {
@@ -84,35 +105,31 @@ public class UDPServer {
                     //Get client attributes from the received data
                     InetAddress clientAddressUDP = requestPacket.getAddress();
                     int clientPortUDP = requestPacket.getPort();
-                    String requestContent = new String(requestPacket.getData());
+                    String requestContent = new String(requestPacket.getData()).substring(0, requestPacket.getLength());
                     JSONObject respondJson = (JSONObject) new JSONObject();
                     respondJson.put("requestHashCode", requestContent.hashCode());
-                    byte[] responseBytes = new byte[1024];
+                    byte[] responseBytes;
                     DatagramPacket responsePacket;
                     try {
                         //handle request
-                        requestContent = "{\"action\":\"query\",\"data\":{\"wordName\":\"banana\"}}";
+//                        requestContent = "{\"action\":\"query\",\"data\":{\"wordName\":\"banana\"}}";
+
 
                         respondJson.put("respondData", handleRequest(requestContent));
-                        respondJson.put("status", "success");
-
-                        logger.info(Thread.currentThread().getName() + " got legal request: " + respondJson.toJSONString());
-
-                        requestContent = respondJson.toString();
-
-                        //debug area>>>>>>>
                         logger.info("Handling: " + requestContent);
-                        String responseContent = requestContent.toUpperCase();
-                        //<<<<<<<
-                        responseBytes = responseContent.getBytes();
+                        respondJson.put("status", "success");
+                        String respondContent = respondJson.toString();
+                        responseBytes = respondContent.getBytes();
+
                         //Create a send Datagram packet and send through socket
                         responsePacket = new DatagramPacket(responseBytes, responseBytes.length, clientAddressUDP, clientPortUDP);
 //                  serverSocket.send(responsePacket);
-                        respondQueue.put(responsePacket);
+                        ResponseTask respondTask = new ResponseTask(responsePacket, System.currentTimeMillis(), 0);
+                        respondTask.respondPacket = responsePacket;
+                        respondQueue.put(respondTask);
                     } catch (ParseException e) {
                         respondJson.put("respondData", "Illegal request.");
                         respondJson.put("status", "failed");
-
                         responseBytes = respondJson.toJSONString().getBytes();
                         responsePacket = new DatagramPacket(responseBytes, responseBytes.length, clientAddressUDP, clientPortUDP);
                         requestIllegalQueue.put(responsePacket);
@@ -160,6 +177,12 @@ public class UDPServer {
                             } else {
                                 throw new ParseException(-1);
                             }
+                        case "confirmation":
+                            if (data.containsKey("respondHash")) {
+                                return addConfirmation(data);
+                            } else {
+                                throw new ParseException(-1);
+                            }
                     }
                 } else {
                     throw new ParseException(-1);
@@ -176,10 +199,6 @@ public class UDPServer {
 
             }
             return requestJSON;
-        }
-
-        private static void illegalRequest(JSONObject data) {
-
         }
 
         private static JSONObject query(JSONObject data) throws ParseException {
@@ -232,13 +251,111 @@ public class UDPServer {
             }
         }
 
+        private static JSONObject addConfirmation(JSONObject data) {
+            String respondHash = data.get("respondHash").toString();
+            respondConfirmationList.add(respondHash);
+            return new JSONObject();
+        }
     }
 
     static class confirmor implements Runnable {
         private final static Logger logger = Logger.getLogger("confirmor");
 
         public void run() {
+            try {
 
+                DatagramSocket confirmorSocket = new DatagramSocket();
+                logger.info("Receiver started. ");
+
+                while (true) {
+
+                    DatagramPacket requestPacket = requestConfirmationQueue.take();
+                    //Get client attributes from the received data
+                    InetAddress clientAddressUDP = requestPacket.getAddress();
+                    int clientPortUDP = requestPacket.getPort();
+
+                    JSONObject confirmationJson = new JSONObject();
+                    String requestContent = new String(requestPacket.getData());
+                    confirmationJson.put("requestHashCode", requestContent.hashCode());
+                    confirmationJson.put("status", "received");
+                    byte[] confirmationBytes = confirmationJson.toJSONString().getBytes();
+                    //Create a send Datagram packet and send through socket
+                    DatagramPacket confirmationPacket = new DatagramPacket(confirmationBytes, confirmationBytes.length, clientAddressUDP, clientPortUDP);
+                    try {
+                        confirmorSocket.send(confirmationPacket);
+                    } catch (IOException e) {
+                        logger.warning("Error while send confirmation: " + e.getMessage());
+                    }
+
+                }
+            } catch (SocketException e) {
+                logger.warning("Failed to start confirmor" + e.getMessage());
+                System.exit(0);
+            } catch (InterruptedException e) {
+                logger.warning("Receiver was interrupted.");
+            }
         }
     }
+
+    static class responder implements Runnable {
+        private final static Logger logger = Logger.getLogger("responder");
+
+        public void run() {
+            try {
+
+                DatagramSocket responderSocket = new DatagramSocket();
+                logger.info("Responder started. ");
+                JSONParser parser = new JSONParser();
+
+                while (true) {
+
+                    ResponseTask responseTask = respondQueue.take();
+                    if (responseTask.handledTimes == 0 || System.currentTimeMillis() - responseTask.timestamp > TASK_RESPOND_CYCLE_MILLIS) {
+                        if (responseTask.handledTimes > MAX_RESPOND_TIMES) {
+                            //Exceeded max response times, remove it by not putting back in.
+                            logger.warning("Response task times exceeded " + MAX_RESPOND_TIMES + "times, will remove : " + new String(responseTask.respondPacket.getData()));
+                        } else {
+                            String responseContent = new String(responseTask.respondPacket.getData());
+                            try {
+                                JSONObject respondJson = (JSONObject) parser.parse(responseContent);
+                                String originRequestHashCode = respondJson.get("requestHashCode").toString();
+                                if (respondConfirmationList.contains(originRequestHashCode)) {
+                                    respondConfirmationList.remove(originRequestHashCode);
+                                    //respond task taken but did't put back in == remove
+                                    logger.info("Respond task was confirmed: " + responseContent);
+                                } else {
+                                    try {
+                                        responderSocket.send(responseTask.respondPacket);
+                                        //put respond packet back in
+                                        responseTask.handledTimes += 1;
+                                        responseTask.timestamp = System.currentTimeMillis();
+                                        respondQueue.put(responseTask);
+//                                        logger.info("Responded: " + responseContent);
+
+                                    } catch (IOException e) {
+                                        logger.warning("Error while responding: " + e.getMessage());
+                                    }
+                                }
+
+                            } catch (ParseException e) {
+                                logger.info("Error while extract respond packet.(Dare ever reach here)" + e.getMessage());
+                            }
+                        }
+
+                    } else {
+                        //Just handled, put it back in.
+                        respondQueue.put(responseTask);
+                    }
+
+
+                }
+            } catch (SocketException e) {
+                logger.warning("Failed to start responder" + e.getMessage());
+                System.exit(0);
+            } catch (InterruptedException e) {
+                logger.warning("Responder was interrupted.");
+            }
+        }
+    }
+
 }

@@ -29,7 +29,7 @@ public class UDPClient {
             //IP and port for socket (static method)
 
             // As UDP Datagrams are bounded by fixed message boundaries, define the length
-            byte[] requestBytes = new byte[1024];
+            byte[] requestBytes;
             byte[] responseBytes = new byte[1024];
 
             String request = inFromUser.readLine();
