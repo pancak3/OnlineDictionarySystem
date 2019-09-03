@@ -1,4 +1,5 @@
 import java.net.*;
+import java.sql.SQLException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.*;
@@ -90,6 +91,7 @@ public class UDPServer {
                     DatagramPacket responsePacket;
                     try {
                         //handle request
+                        requestContent = "{\"action\":\"query\",\"data\":{\"wordName\":\"banana\"}}";
 
                         respondJson.put("respondData", handleRequest(requestContent));
                         respondJson.put("status", "success");
@@ -99,7 +101,6 @@ public class UDPServer {
                         requestContent = respondJson.toString();
 
                         //debug area>>>>>>>
-                        requestContent = "{\"action\":\"query\",\"data\":{\"wordName\":\"apple\"}}";
                         logger.info("Handling: " + requestContent);
                         String responseContent = requestContent.toUpperCase();
                         //<<<<<<<
@@ -120,7 +121,7 @@ public class UDPServer {
 
                 }
             } catch (InterruptedException e) {
-                logger.warning(e.getMessage() + " here");
+                logger.warning(e.getMessage());
             }
         }
 
@@ -186,7 +187,15 @@ public class UDPServer {
         }
 
         private static void query(JSONObject data) {
+            String wordName = data.get("wordName").toString();
+            try {
+//                resList = db.queryWord(wordName);
+                db.queryWord(wordName);
 
+            } catch (SQLException e) {
+                logger.warning(Thread.currentThread().getName() + " while querying " + wordName + e.getMessage());
+                //err or no word match in database
+            }
         }
 
         private static void add(JSONObject data) {

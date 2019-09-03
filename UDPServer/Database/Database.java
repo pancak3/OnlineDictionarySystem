@@ -41,7 +41,7 @@ class Word {
 public class Database {
     private Connection conn = connect();
     private final static Logger logger = Logger.getLogger("virtualDB");
-    String SQL_FILE_PATH = "./SQLite";
+    private final static String SQL_FILE_PATH = "SQLite";
 
 
     private Connection connect() {
@@ -70,13 +70,13 @@ public class Database {
         logger.info("[*] connection closed");
     }
 
-    private List<Word> queryWord(String wordName) throws SQLException {
+    public List<Word> queryWord(String wordName) throws SQLException {
         List<Word> wordList = new ArrayList<Word>();
         Word word = new Word(0, null, null, null);
         String sql = "select * from words where wordName=\"" + wordName + '"';
-        try (
-                Statement stmt = this.conn.createStatement();
-                ResultSet res = stmt.executeQuery(sql)) {
+        try {
+            Statement stmt = this.conn.createStatement();
+            ResultSet res = stmt.executeQuery(sql);
             while (res.next()) {
                 word.idx = res.getInt("idx");
                 word.wordName = res.getString("wordName");
@@ -95,7 +95,7 @@ public class Database {
     }
 
 
-    private Boolean addWord(String wordName, String wordType, String meaning) throws SQLException {
+    public Boolean addWord(String wordName, String wordType, String meaning) throws SQLException {
         String sql = "insert into words (wordName,wordType,meaning) values(?,?,?)";
         try (
                 PreparedStatement pstmt = this.conn.prepareStatement(sql)) {
@@ -111,7 +111,7 @@ public class Database {
         return true;
     }
 
-    private Boolean editWord(int idx, String wordName, String wordType, String meaning) throws SQLException {
+    public Boolean editWord(int idx, String wordName, String wordType, String meaning) throws SQLException {
         String sql = "update words set wordName = ? , "
                 + "wordType = ? ,  "
                 + "meaning = ? "
@@ -132,7 +132,7 @@ public class Database {
         return true;
     }
 
-    private Boolean removeWord(int idx) throws SQLException {
+    public Boolean removeWord(int idx) throws SQLException {
         String sql = "delete from words where idx = ?";
 
         try (
