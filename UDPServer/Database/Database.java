@@ -1,17 +1,11 @@
 package Database;
 
-import java.io.File;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Queue;
 import java.util.logging.*;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.PreparedStatement;
+import org.json.simple.JSONObject;
 
 
 class User {
@@ -70,33 +64,37 @@ public class Database {
         logger.info("[*] connection closed");
     }
 
-    public List<Word> queryWord(String wordName) throws SQLException {
+    public JSONObject queryWord(String wordName) throws SQLException {
         List<Word> wordList = new ArrayList<Word>();
-        Word word = new Word(0, null, null, null);
         String sql = "select * from words where wordName=\"" + wordName + '"';
+        JSONObject resJson = (JSONObject) new JSONObject();
         try {
             Statement stmt = this.conn.createStatement();
             ResultSet res = stmt.executeQuery(sql);
+            int idx = 0;
             while (res.next()) {
-                word.idx = res.getInt("idx");
-                word.wordName = res.getString("wordName");
-                word.wordType = res.getString("wordType");
-                word.meaning = res.getString("meaning");
-                wordList.add(word);
+                // JSONObject actually put address in, so need new word every time
+                JSONObject word = (JSONObject) new JSONObject();
+                word.put("idx", res.getString("idx"));
+                word.put("wordName", res.getString("wordName"));
+                word.put("wordType", res.getString("wordType"));
+                word.put("meaning", res.getString("meaning"));
+                resJson.put(idx, word);
+                idx++;
             }
-
-
+            logger.info("[-] queried word: " + wordName + ": " + resJson.toJSONString());
+            return resJson;
         } catch (SQLException e) {
             logger.warning(e.getMessage());
             throw e;
         }
-        logger.info("[-] queried word: " + wordName + ". ");
-        return wordList;
     }
 
 
-    public Boolean addWord(String wordName, String wordType, String meaning) throws SQLException {
+    public JSONObject addWord(String wordName, String wordType, String meaning) throws SQLException {
         String sql = "insert into words (wordName,wordType,meaning) values(?,?,?)";
+        JSONObject resJson = (JSONObject) new JSONObject();
+
         try (
                 PreparedStatement pstmt = this.conn.prepareStatement(sql)) {
             pstmt.setString(1, wordName);
@@ -108,10 +106,12 @@ public class Database {
             throw e;
         }
         logger.info("[-] added word: " + wordName + ". ");
-        return true;
+        return resJson;
     }
 
-    public Boolean editWord(int idx, String wordName, String wordType, String meaning) throws SQLException {
+    public JSONObject editWord(int idx, String wordName, String wordType, String meaning) throws SQLException {
+        JSONObject resJson = (JSONObject) new JSONObject();
+
         String sql = "update words set wordName = ? , "
                 + "wordType = ? ,  "
                 + "meaning = ? "
@@ -129,10 +129,12 @@ public class Database {
             throw e;
         }
         logger.info("[-] edited word: " + wordName + ". ");
-        return true;
+        return resJson;
     }
 
-    public Boolean removeWord(int idx) throws SQLException {
+    public JSONObject removeWord(int idx) throws SQLException {
+        JSONObject resJson = (JSONObject) new JSONObject();
+
         String sql = "delete from words where idx = ?";
 
         try (
@@ -144,7 +146,8 @@ public class Database {
             throw e;
         }
         logger.info("[-] removed word: " + idx + ". ");
-        return true;
+        return resJson;
+
     }
 
     public static void main(String[] args) {

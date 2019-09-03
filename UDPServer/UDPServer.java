@@ -138,32 +138,28 @@ public class UDPServer {
                     switch (action) {
                         case "query":
                             if (data.containsKey("wordName")) {
-                                query(data);
+                                return query(data);
                             } else {
                                 throw new ParseException(-1);
                             }
-                            break;
                         case "add":
-                            if (data.containsKey("wordName") && data.containsKey("meaning")) {
-                                add(data);
+                            if (data.containsKey("wordName") && data.containsKey("wordType") && data.containsKey("meaning")) {
+                                return add(data);
                             } else {
                                 throw new ParseException(-1);
                             }
-                            break;
                         case "edit":
-                            if (data.containsKey("idx") && data.containsKey("wordName") && data.containsKey("meaning")) {
-                                edit(data);
+                            if (data.containsKey("idx") && data.containsKey("wordName") && data.containsKey("wordType") && data.containsKey("meaning")) {
+                                return edit(data);
                             } else {
                                 throw new ParseException(-1);
                             }
-                            break;
                         case "remove":
                             if (data.containsKey("idx") && data.containsKey("wordName")) {
-                                remove(data);
+                                return remove(data);
                             } else {
                                 throw new ParseException(-1);
                             }
-                            break;
                     }
                 } else {
                     throw new ParseException(-1);
@@ -186,29 +182,56 @@ public class UDPServer {
 
         }
 
-        private static void query(JSONObject data) {
+        private static JSONObject query(JSONObject data) throws ParseException {
             String wordName = data.get("wordName").toString();
             try {
-//                resList = db.queryWord(wordName);
-                db.queryWord(wordName);
-
+                return db.queryWord(wordName);
             } catch (SQLException e) {
                 logger.warning(Thread.currentThread().getName() + " while querying " + wordName + e.getMessage());
                 //err or no word match in database
+                throw new ParseException(-1);
             }
         }
 
-        private static void add(JSONObject data) {
-
+        private static JSONObject add(JSONObject data) throws ParseException {
+            String wordName = data.get("wordName").toString();
+            String wordType = data.get("wordType").toString();
+            String wordMeaning = data.get("wordMeaning").toString();
+            try {
+                return db.addWord(wordName, wordType, wordMeaning);
+            } catch (SQLException e) {
+                logger.warning(Thread.currentThread().getName() + " while adding " + wordName + e.getMessage());
+                //err or no word match in database
+                throw new ParseException(-1);
+            }
         }
 
-        private static void edit(JSONObject data) {
-
+        private static JSONObject edit(JSONObject data) throws ParseException {
+            String idx = data.get("idx").toString();
+            String wordName = data.get("wordName").toString();
+            String wordType = data.get("wordType").toString();
+            String meaning = data.get("meaning").toString();
+            try {
+                return db.editWord(Integer.parseInt(idx), wordName, wordType, meaning);
+            } catch (SQLException e) {
+                logger.warning(Thread.currentThread().getName() + " while editing " + wordName + e.getMessage());
+                //err or no word match in database
+                throw new ParseException(-1);
+            }
         }
 
-        private static void remove(JSONObject data) {
 
+        private static JSONObject remove(JSONObject data) throws ParseException {
+            String idx = data.get("idx").toString();
+            try {
+                return db.removeWord(Integer.parseInt(idx));
+            } catch (SQLException e) {
+                logger.warning(Thread.currentThread().getName() + " while remove " + idx + e.getMessage());
+                //err or no word match in database
+                throw new ParseException(-1);
+            }
         }
+
     }
 
     static class confirmor implements Runnable {
