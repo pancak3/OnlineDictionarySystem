@@ -34,7 +34,7 @@ echo -e "done."
 echo -e "[*] Compiling UDPClient ... \c"
 UDPSERVER_PATH="./UDPClient"
 javac -cp \
-  ./lib/json-simple-1.1.1.jar:./$UDPSERVER_PATH \
+  ./bin/json-simple-1.1.1.jar:./$UDPSERVER_PATH \
   $UDPSERVER_PATH/UDPClient.java
 jar --create \
   --file $BIN_PATH/UDPClient.jar \
