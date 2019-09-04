@@ -22,10 +22,10 @@ jar --create \
   $UDPSERVER_PATH/Database/User.class \
   $UDPSERVER_PATH/Database/Word.class \
   -C $UDPSERVER_PATH UDPServer.class \
-  -C $UDPSERVER_PATH UDPServer\$confirmor.class \
-  -C $UDPSERVER_PATH UDPServer\$handler.class \
-  -C $UDPSERVER_PATH UDPServer\$receiver.class \
-  -C $UDPSERVER_PATH UDPServer\$responder.class \
+  -C $UDPSERVER_PATH UDPServer\$Confirmor.class \
+  -C $UDPSERVER_PATH UDPServer\$Handler.class \
+  -C $UDPSERVER_PATH UDPServer\$Receiver.class \
+  -C $UDPSERVER_PATH UDPServer\$Responder.class \
   -C $UDPSERVER_PATH UDPServer\$ResponseTask.class
 
 echo -e "done."
@@ -39,7 +39,10 @@ javac -cp \
 jar --create \
   --file $BIN_PATH/UDPClient.jar \
   --manifest $UDPCLIENT_PATH/MANIFEST.MF \
-  -C $UDPCLIENT_PATH UDPClient.class
+  -C $UDPCLIENT_PATH UDPClient.class \
+  -C $UDPCLIENT_PATH UDPClient\$User.class \
+  -C $UDPCLIENT_PATH UDPClient\$Sender.class \
+  -C $UDPCLIENT_PATH UDPClient\$Action.class
 echo -e "done."
 
 echo -e "\r\n[-] Note: Due to the use of Sqlite file, should always run UDPServer or UDPServer under \$Project_Path/bin/"

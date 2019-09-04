@@ -35,7 +35,7 @@ public class UDPServer {
     }
 
     private final static BlockingQueue<DatagramPacket> requestQueue = new LinkedBlockingQueue<>(QUEUE_SIZE);
-    private final static BlockingQueue<DatagramPacket> requestIllegalQueue = new LinkedBlockingQueue<>(QUEUE_SIZE);
+    private final static BlockingQueue<DatagramPacket> HandleRequestFailQueue = new LinkedBlockingQueue<>(QUEUE_SIZE);
     private final static BlockingQueue<ResponseTask> respondQueue = new LinkedBlockingQueue<>(QUEUE_SIZE);
     private final static BlockingQueue<DatagramPacket> requestConfirmationQueue = new LinkedBlockingQueue<>(QUEUE_SIZE);
     private final static BlockingQueue<DatagramPacket> respondConfirmationQueue = new LinkedBlockingQueue<>(QUEUE_SIZE);
@@ -46,11 +46,11 @@ public class UDPServer {
 
     public static void main(String[] args) throws IOException {
         // start receiver
-        new Thread(new receiver(), "Receiver").start();
+        new Thread(new Receiver(), "Receiver").start();
     }
 
 
-    static class receiver implements Runnable {
+    static class Receiver implements Runnable {
         private final static Logger logger = Logger.getLogger("receiver");
 
         public void run() {
@@ -60,13 +60,13 @@ public class UDPServer {
                 logger.info("UDP server started at port: " + UDP_PORT);
 
                 // start confirmor pool
-                new Thread(new confirmor(), "Confirmor-").start();
+                new Thread(new Confirmor(), "Confirmor-").start();
                 //start responder
-                new Thread(new responder(), "Responder-").start();
+                new Thread(new Responder(), "Responder-").start();
 
                 // start handler pool
                 for (int i = 0; i < HANDLER_POOL_SIZE; i++) {
-                    new Thread(new handler(), "Handler-" + i).start();
+                    new Thread(new Handler(), "Handler-" + i).start();
                 }
 
                 while (true) {
@@ -93,8 +93,8 @@ public class UDPServer {
     }
 
 
-    static class handler implements Runnable {
-        private final static Logger logger = Logger.getLogger("handler");
+    static class Handler implements Runnable {
+        private final static Logger logger = Logger.getLogger("Handler");
 
 
         public void run() {
@@ -132,7 +132,15 @@ public class UDPServer {
                         respondJson.put("status", "failed");
                         responseBytes = respondJson.toJSONString().getBytes();
                         responsePacket = new DatagramPacket(responseBytes, responseBytes.length, clientAddressUDP, clientPortUDP);
-                        requestIllegalQueue.put(responsePacket);
+                        HandleRequestFailQueue.put(responsePacket);
+                    } catch (Exception e) {
+                        logger.warning("[*] Unexpect exception: " + e.getMessage());
+
+                        respondJson.put("respondData", "Server err");
+                        respondJson.put("status", "failed");
+                        responseBytes = respondJson.toJSONString().getBytes();
+                        responsePacket = new DatagramPacket(responseBytes, responseBytes.length, clientAddressUDP, clientPortUDP);
+                        HandleRequestFailQueue.put(responsePacket);
                     }
 
 
@@ -148,8 +156,13 @@ public class UDPServer {
                 JSONParser parser = new JSONParser();
                 requestJSON = (JSONObject) parser.parse(requestContent);
                 if (requestJSON.containsKey("action") && requestJSON.containsKey("data")) {
-                    String action = requestJSON.get("action").toString();
-                    JSONObject data = (JSONObject) requestJSON.get("data");
+                    //requestJSON.get("action") without (String) is not allowed
+                    //I should learn more Java
+                    //need to understand the principle of this
+                    String action = (String) requestJSON.get("action");
+
+                    //I jump, who else?
+                    JSONObject data = (JSONObject) parser.parse(requestJSON.get("data").toString());
 
                     //each should check and put status in confirmationQueue
                     switch (action) {
@@ -258,8 +271,8 @@ public class UDPServer {
         }
     }
 
-    static class confirmor implements Runnable {
-        private final static Logger logger = Logger.getLogger("confirmor");
+    static class Confirmor implements Runnable {
+        private final static Logger logger = Logger.getLogger("Confirmor");
 
         public void run() {
             try {
@@ -297,8 +310,8 @@ public class UDPServer {
         }
     }
 
-    static class responder implements Runnable {
-        private final static Logger logger = Logger.getLogger("responder");
+    static class Responder implements Runnable {
+        private final static Logger logger = Logger.getLogger("Responder");
 
         public void run() {
             try {
@@ -354,6 +367,38 @@ public class UDPServer {
                 System.exit(0);
             } catch (InterruptedException e) {
                 logger.warning("Responder was interrupted.");
+            }
+        }
+    }
+
+    static class FailedResponder implements Runnable {
+        private final static Logger logger = Logger.getLogger("FailedResponder");
+
+        public void run() {
+            try {
+
+                DatagramSocket responderSocket = new DatagramSocket();
+                logger.info("FailedResponder started. ");
+
+                while (true) {
+
+                    DatagramPacket responsePacket = HandleRequestFailQueue.take();
+
+                    try {
+                        responderSocket.send(responsePacket);
+
+                    } catch (IOException e) {
+                        logger.warning("Failed to send request failed packet");
+                        HandleRequestFailQueue.put(responsePacket);
+                    }
+
+
+                }
+            } catch (SocketException e) {
+                logger.warning("Failed to start FailedResponder" + e.getMessage());
+                System.exit(0);
+            } catch (InterruptedException e) {
+                logger.warning("FailedResponder was interrupted.");
             }
         }
     }
