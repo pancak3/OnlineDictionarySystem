@@ -16,12 +16,14 @@ import org.json.simple.parser.ParseException;
 
 public class UDPServer {
     private final static int UDP_PORT = 7397;
-    private final static int QUEUE_SIZE = 42;
-    private final static int HANDLER_POOL_SIZE = 1;
-    private final static int CONFIRMOR_POOL_SIZE = 10;
+    private final static int QUEUE_SIZE = 1000;
+    private final static int HANDLER_POOL_SIZE = 200;
+    private final static int CONFIRMOR_POOL_SIZE = 5;
+    private final static int RESPONDER_POOL_SIZE = 5;
     private final static int TASK_RESPOND_CYCLE_MILLIS = 100;
-    private final static int MAX_RESPOND_TIMES = 30;
+    private final static int MAX_RESPOND_TIMES = 100;
     private final static int MAX_BUFFER_SIZE = 10240;
+
 
     static class ResponseTask {
         DatagramPacket respondPacket;
@@ -52,7 +54,7 @@ public class UDPServer {
 
 
     static class Receiver implements Runnable {
-        private final static Logger logger = Logger.getLogger("receiver");
+        private final static Logger logger = Logger.getLogger("Receiver");
 
         public void run() {
             try {
@@ -61,9 +63,15 @@ public class UDPServer {
                 logger.info("UDP server started at port: " + UDP_PORT);
 
                 // start confirmor pool
-                new Thread(new Confirmor(), "Confirmor-").start();
-                //start responder
-                new Thread(new Responder(), "Responder-").start();
+                for (int i = 0; i < CONFIRMOR_POOL_SIZE; i++) {
+
+                    new Thread(new Confirmor(), "Confirmor-" + i).start();
+                }
+                //start responder pool
+                for (int i = 0; i < RESPONDER_POOL_SIZE; i++) {
+
+                    new Thread(new Responder(), "Responder-").start();
+                }
 
                 // start handler pool
                 for (int i = 0; i < HANDLER_POOL_SIZE; i++) {
@@ -387,38 +395,6 @@ public class UDPServer {
                 System.exit(0);
             } catch (InterruptedException e) {
                 logger.warning("Responder was interrupted.");
-            }
-        }
-    }
-
-    static class FailedResponder implements Runnable {
-        private final static Logger logger = Logger.getLogger("FailedResponder");
-
-        public void run() {
-            try {
-
-                DatagramSocket responderSocket = new DatagramSocket();
-                logger.info("FailedResponder started. ");
-
-                while (true) {
-
-                    DatagramPacket responsePacket = HandleRequestFailQueue.take();
-
-                    try {
-                        responderSocket.send(responsePacket);
-
-                    } catch (IOException e) {
-                        logger.warning("Failed to send request failed packet");
-                        HandleRequestFailQueue.put(responsePacket);
-                    }
-
-
-                }
-            } catch (SocketException e) {
-                logger.warning("Failed to start FailedResponder" + e.getMessage());
-                System.exit(0);
-            } catch (InterruptedException e) {
-                logger.warning("FailedResponder was interrupted.");
             }
         }
     }

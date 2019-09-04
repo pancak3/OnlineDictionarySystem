@@ -20,10 +20,12 @@ public class UDPClient {
     private final static String UDP_SERVER_ADDR = "localhost";
     private final static int UDP_SERVER_PORT = 7397;
 
-    private final static int REQUEST_SEND_CYCLE_MILLIS = 300;
-    private final static int MAX_SEND_TIMES = 10;
+    private final static int REQUEST_SEND_CYCLE_MILLIS = 100;
+    private final static int MAX_SEND_TIMES = 100;
     private final static int MAX_BUFFER_SIZE = 10240;
 
+    private static AtomicReference<Integer> stressTestingSuccessNum = new AtomicReference<Integer>();
+    private static AtomicReference<Integer> stressTestingFailedNum = new AtomicReference<Integer>();
 
     private final static int RESPONSE_RECEIVE_TIMEOUT_MILLIS = 10000;
 
@@ -59,30 +61,32 @@ public class UDPClient {
 
     public static void main(String args[]) throws IOException {
 
-        DatagramSocket clientSocket = null;
-        InetAddress ServerAddressUDP = InetAddress.getByName(UDP_SERVER_ADDR);
-        int serverPortUDP = UDP_SERVER_PORT;
 
         logger.info("UDPClient stated with UDP_SERVER info -> " + UDP_SERVER_ADDR + ":" + UDP_SERVER_PORT);
 
         BufferedReader userInput = new BufferedReader(new InputStreamReader(System.in));
 //        String request = userInput.readLine();
 
-        SingleClient mainSingleClient = new SingleClient();
+//        SingleClient mainSingleClient = new SingleClient();
         JSONObject temJson = new JSONObject();
         JSONObject userInputJson = new JSONObject();
-        //add test
+
+//        mainSingleClient.action.updateAction(userInputJson);
+        stressTestingSuccessNum.set(0);
+        stressTestingFailedNum.set(0);
+        for (int i = 0; i < 500; ++i) {
+            //add test
 //        temJson.put("wordName", "banana");
 //        temJson.put("wordType", "noun");
 //        temJson.put("wordMeaning", "555555");
 //        userInputJson.put("data", temJson);
 //        userInputJson.put("action", "add");
 //        //query test
-        temJson.put("wordName", "banana");
-        userInputJson.put("data", temJson);
-        userInputJson.put("action", "query");
+            temJson.put("wordName", "banana");
+            userInputJson.put("data", temJson);
+            userInputJson.put("action", "query");
 
-        //edit test
+            //edit test
 //        temJson.put("wordName", "banana");
 //        temJson.put("wordType", "noun");
 //        temJson.put("wordMeaning", "777777");
@@ -90,14 +94,17 @@ public class UDPClient {
 //        userInputJson.put("data", temJson);
 //        userInputJson.put("action", "edit");
 
-        //remove test
+            //remove test
 //        temJson.put("idx", "20");
 //        userInputJson.put("data", temJson);
 //        userInputJson.put("action", "remove");
+            userInputJson.put("timestamp", System.currentTimeMillis());
 
-        userInputJson.put("timestamp", System.currentTimeMillis());
-        mainSingleClient.action.updateAction(userInputJson);
-        mainSingleClient.run();
+            SingleClient singleClient = new SingleClient(userInputJson);
+            new Thread(singleClient, "SingleClient-" + i).start();
+        }
+//        mainSingleClient.run();
+
 
     }
 
@@ -108,6 +115,7 @@ public class UDPClient {
         private final Action action = new Action();
         private final JSONParser parser = new JSONParser();
         private boolean wasRequestReceived = false;
+        private boolean wasRequestSuccess = false;
 
         public void run() {
             logger.info("[*] Running SingleClient-" + currentThreadName);
@@ -175,8 +183,9 @@ public class UDPClient {
                                             handleResponse(responseJson);
 
                                             actionRequestTimes = MAX_SEND_TIMES + 1;
+                                            wasRequestSuccess = true;
                                             action.clearAction();
-                                            System.exit(0);
+//                                            System.exit(0);
                                             break;
                                     }
                                 }
@@ -199,8 +208,14 @@ public class UDPClient {
 
 
                 }
+                if (!wasRequestSuccess) {
+                    logger.info("[*] " + currentThreadName + " receive timeout ");
+                    stressTestingFailedNum.set(stressTestingFailedNum.get() + 1);
+                } else {
+                    stressTestingSuccessNum.set(stressTestingSuccessNum.get() + 1);
+                }
 
-                logger.info("[*] " + currentThreadName + " receive timeout ");
+                logger.info("[*] Success: " + stressTestingSuccessNum.get() + " Failed: " + stressTestingFailedNum.get());
                 singleClientSocket.close();
 
 
@@ -210,7 +225,11 @@ public class UDPClient {
         }
 
         public void handleResponse(JSONObject responseJson) {
-            logger.info("[*] Handling response: " + responseJson.toJSONString());
+            logger.info("[*] SingleClient-" + currentThreadName + " is handling response: " + responseJson.toJSONString());
+        }
+
+        SingleClient(JSONObject actionJson) {
+            this.action.updateAction(actionJson);
         }
     }
 
