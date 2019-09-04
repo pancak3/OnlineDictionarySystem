@@ -35,11 +35,12 @@ class Word {
 public class Database {
     private Connection conn = connect();
     private final static Logger logger = Logger.getLogger("virtualDB");
+
     private final static String SQL_FILE_PATH = "SQLite";
 
 
     private Connection connect() {
-
+        logger.setLevel(Level.SEVERE);
         Connection conn = null;
         try {
             String url = "jdbc:sqlite:" + SQL_FILE_PATH;
@@ -63,6 +64,7 @@ public class Database {
         }
         logger.info("[*] connection closed");
     }
+
     //to remove warning both in IJ and compile, but guess there is better way to use Json
     @SuppressWarnings("unchecked")
     public JSONObject queryWord(String wordName) throws SQLException {

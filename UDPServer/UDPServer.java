@@ -1,5 +1,6 @@
 import java.net.*;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -11,18 +12,23 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+import javax.sound.sampled.Port;
+import java.util.Scanner;
+
+
 //to remove warning both in IJ and compile, but guess there is better way to use Json
 @SuppressWarnings("unchecked")
 
 public class UDPServer {
-    private final static int UDP_PORT = 7397;
+    private static int UDP_PORT = 7397;
     private final static int QUEUE_SIZE = 1000;
-    private final static int HANDLER_POOL_SIZE = 200;
-    private final static int CONFIRMOR_POOL_SIZE = 5;
-    private final static int RESPONDER_POOL_SIZE = 5;
+    private static int HANDLER_POOL_SIZE = 200;
+    private static int CONFIRMOR_POOL_SIZE = 5;
+    private static int RESPONDER_POOL_SIZE = 5;
     private final static int TASK_RESPOND_CYCLE_MILLIS = 100;
     private final static int MAX_RESPOND_TIMES = 100;
     private final static int MAX_BUFFER_SIZE = 10240;
+    private static boolean IS_DEBUG = false;
 
 
     static class ResponseTask {
@@ -48,8 +54,55 @@ public class UDPServer {
     private final static Logger logger = Logger.getLogger("UDPServer");
 
     public static void main(String[] args) throws IOException {
-        // start receiver
-        new Thread(new Receiver(), "Receiver").start();
+        Scanner inputScanner = new Scanner(System.in);
+        System.out.println("[*] Welcome to UDPServer.");
+        System.out.println("    UDPServer terminal provides two modes -> \"Normal\" and \"Debug\".\r\n");
+        System.out.println("    Normal: Run with default config; Only warning logs.");
+        System.out.println("    Debug: Set configs; Fully logs.\r\n");
+        System.out.print("Do you prefer \"Normal\"?(y/n): ");
+
+        boolean inputIllegal = false;
+
+        for (int i = 0; i < 5; i++) {
+            String input = inputScanner.nextLine();
+            if (input.equals("y") || input.equals("Y")) {
+                inputIllegal = true;
+                break;
+            } else if (input.equals("n") || input.equals("N")) {
+                IS_DEBUG = true;
+                inputIllegal = true;
+                break;
+            }
+
+        }
+        if (inputIllegal) {
+            String mode;
+            if (IS_DEBUG) {
+                mode = "(debug):";
+
+                System.out.print(mode + "How many handlers do you want? -> ");
+                HANDLER_POOL_SIZE = Integer.parseInt(inputScanner.nextLine());
+
+                System.out.print(mode + "How many confirmor do you want? -> ");
+                CONFIRMOR_POOL_SIZE = Integer.parseInt(inputScanner.nextLine());
+
+                System.out.print(mode + "How many responder do you want? -> ");
+                RESPONDER_POOL_SIZE = Integer.parseInt(inputScanner.nextLine());
+
+            }
+            System.out.println("[*] Current config:");
+            System.out.println("    Handlers Num: " + HANDLER_POOL_SIZE);
+            System.out.println("    Confirmor Num: " + CONFIRMOR_POOL_SIZE);
+            System.out.println("    Responder Num: " + RESPONDER_POOL_SIZE);
+
+
+            // start receiver
+            new Thread(new Receiver(), "Receiver").start();
+
+        } else {
+            System.out.println("[*] Too many times try, bye.");
+        }
+
     }
 
 
@@ -60,7 +113,11 @@ public class UDPServer {
             try {
 
                 DatagramSocket receiverSocket = new DatagramSocket(UDP_PORT);
-                logger.info("UDP server started at port: " + UDP_PORT);
+                if (!IS_DEBUG) {
+                    logger.setLevel(Level.WARNING);
+                    System.out.println("[*] UDP server started at port: " + UDP_PORT);
+                }
+                logger.info("[*] UDP server started at port: " + UDP_PORT);
 
                 // start confirmor pool
                 for (int i = 0; i < CONFIRMOR_POOL_SIZE; i++) {
@@ -108,6 +165,10 @@ public class UDPServer {
 
         public void run() {
             try {
+                if (!IS_DEBUG) {
+                    logger.setLevel(Level.WARNING);
+                }
+
                 logger.info(Thread.currentThread().getName() + " is working ...");
                 while (true) {
                     DatagramPacket requestPacket = requestQueue.take();
@@ -303,7 +364,9 @@ public class UDPServer {
 
         public void run() {
             try {
-
+                if (!IS_DEBUG) {
+                    logger.setLevel(Level.WARNING);
+                }
                 DatagramSocket confirmorSocket = new DatagramSocket();
                 logger.info("Confirmor started. ");
 
@@ -343,7 +406,9 @@ public class UDPServer {
 
         public void run() {
             try {
-
+                if (!IS_DEBUG) {
+                    logger.setLevel(Level.WARNING);
+                }
                 DatagramSocket responderSocket = new DatagramSocket();
                 logger.info("Responder started. ");
                 JSONParser parser = new JSONParser();
