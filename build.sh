@@ -32,14 +32,14 @@ echo -e "done."
 
 #compile UDPClient
 echo -e "[*] Compiling UDPClient ... \c"
-UDPSERVER_PATH="./UDPClient"
+UDPCLIENT_PATH="./UDPClient"
 javac -cp \
-  ./bin/json-simple-1.1.1.jar:./$UDPSERVER_PATH \
-  $UDPSERVER_PATH/UDPClient.java
+  ./bin/json-simple-1.1.1.jar:./$UDPCLIENT_PATH \
+  $UDPCLIENT_PATH/UDPClient.java
 jar --create \
   --file $BIN_PATH/UDPClient.jar \
-  --main-class UDPClient \
-  -C $UDPSERVER_PATH UDPClient.class
+  --manifest $UDPCLIENT_PATH/MANIFEST.MF \
+  -C $UDPCLIENT_PATH UDPClient.class
 echo -e "done."
 
-echo -e "\r\n[-] Note: Due to the use of Sqlite file, should always run UDPServer under bin/ path"
+echo -e "\r\n[-] Note: Due to the use of Sqlite file, should always run UDPServer or UDPServer under \$Project_Path/bin/"
