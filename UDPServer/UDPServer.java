@@ -62,12 +62,12 @@ public class UDPServer {
                 // start confirmor pool
                 new Thread(new Confirmor(), "Confirmor-").start();
                 //start responder
-                new Thread(new Responder(), "Responder-").start();
+//                new Thread(new Responder(), "Responder-").start();
 
                 // start handler pool
-                for (int i = 0; i < HANDLER_POOL_SIZE; i++) {
-                    new Thread(new Handler(), "Handler-" + i).start();
-                }
+//                for (int i = 0; i < HANDLER_POOL_SIZE; i++) {
+//                    new Thread(new Handler(), "Handler-" + i).start();
+//                }
 
                 while (true) {
                     byte[] receiveData = new byte[1024];
@@ -123,7 +123,6 @@ public class UDPServer {
 
                         //Create a send Datagram packet and send through socket
                         responsePacket = new DatagramPacket(responseBytes, responseBytes.length, clientAddressUDP, clientPortUDP);
-//                  serverSocket.send(responsePacket);
                         ResponseTask respondTask = new ResponseTask(responsePacket, System.currentTimeMillis(), 0);
                         respondTask.respondPacket = responsePacket;
                         respondQueue.put(respondTask);
@@ -278,28 +277,30 @@ public class UDPServer {
             try {
 
                 DatagramSocket confirmorSocket = new DatagramSocket();
-                logger.info("Receiver started. ");
+                logger.info("Confirmor started. ");
 
                 while (true) {
 
                     DatagramPacket requestPacket = requestConfirmationQueue.take();
                     //Get client attributes from the received data
+                    logger.info("[*] Handling confirmation.");
                     InetAddress clientAddressUDP = requestPacket.getAddress();
                     int clientPortUDP = requestPacket.getPort();
 
                     JSONObject confirmationJson = new JSONObject();
-                    String requestContent = new String(requestPacket.getData());
-                    confirmationJson.put("requestHashCode", requestContent.hashCode());
+                    String requestContent = new String(requestPacket.getData()).substring(0, requestPacket.getLength());
+                    logger.info("[*] Received :" + requestContent);
                     confirmationJson.put("status", "received");
+                    confirmationJson.put("requestHashCode", requestContent.hashCode());
                     byte[] confirmationBytes = confirmationJson.toJSONString().getBytes();
                     //Create a send Datagram packet and send through socket
                     DatagramPacket confirmationPacket = new DatagramPacket(confirmationBytes, confirmationBytes.length, clientAddressUDP, clientPortUDP);
                     try {
                         confirmorSocket.send(confirmationPacket);
+                        logger.info("[*] Send confirmation: " + confirmationJson.toJSONString());
                     } catch (IOException e) {
                         logger.warning("Error while send confirmation: " + e.getMessage());
                     }
-
                 }
             } catch (SocketException e) {
                 logger.warning("Failed to start confirmor" + e.getMessage());
@@ -326,7 +327,7 @@ public class UDPServer {
                     if (responseTask.handledTimes == 0 || System.currentTimeMillis() - responseTask.timestamp > TASK_RESPOND_CYCLE_MILLIS) {
                         if (responseTask.handledTimes > MAX_RESPOND_TIMES) {
                             //Exceeded max response times, remove it by not putting back in.
-                            logger.warning("Response task times exceeded " + MAX_RESPOND_TIMES + "times, will remove : " + new String(responseTask.respondPacket.getData()));
+                            logger.warning("Response task times exceeded " + MAX_RESPOND_TIMES + " times, will remove : " + new String(responseTask.respondPacket.getData()));
                         } else {
                             String responseContent = new String(responseTask.respondPacket.getData());
                             try {

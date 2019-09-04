@@ -1,10 +1,7 @@
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.InetAddress;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.SocketException;
+import java.net.*;
 import java.util.concurrent.atomic.*;
 
 import java.util.logging.*;
@@ -83,6 +80,7 @@ public class UDPClient {
         private final static String currentThreadName = Thread.currentThread().getName();
         private final static Logger logger = Logger.getLogger("SingleClient-" + currentThreadName);
         private final Action action = new Action();
+        private final JSONParser parser = new JSONParser();
 
         public void run() {
             logger.info("[*] Running SingleClient-" + currentThreadName);
@@ -104,11 +102,44 @@ public class UDPClient {
 
                             requestJson.put("action", actionJson.get("action").toString());
                             requestJson.put("data", actionJson.get("data").toString());
-                            requestJson.put("requestHashCode", actionJson.hashCode());
+
                             String requestString = requestJson.toJSONString();
                             byte[] requestBytes = requestString.getBytes();
                             DatagramPacket requestPacket = new DatagramPacket(requestBytes, requestBytes.length, InetAddress.getByName(UDP_SERVER_ADDR), UDP_SERVER_PORT);
                             singleClientSocket.send(requestPacket);
+//                            logger.info("[*] Sent :" + requestString + " with hashCode:" + requestString.hashCode());
+                            //set receive time out
+                            singleClientSocket.setSoTimeout(REQUEST_SEND_CYCLE_MILLIS);
+                            byte[] buffer = new byte[1024];
+                            DatagramPacket responsePacket = new DatagramPacket(buffer, buffer.length);
+
+
+                            try {
+                                singleClientSocket.receive(responsePacket);
+                                String responseContent = new String(responsePacket.getData()).substring(0, requestPacket.getLength());
+                                System.out.println("[-] Got response from server: " + responseContent);
+
+                                try {
+                                    JSONObject responseJson = (JSONObject) parser.parse(responseContent);
+                                    String requestStatus = (String) responseJson.get("status").toString();
+                                    switch (requestStatus) {
+                                        case "received":
+                                            logger.info("[*] request arrived.");
+                                            break;
+                                        case "success":
+                                            logger.info("[*] request success.");
+                                            actionJson.put("requestTimes", MAX_SEND_TIMES + 1);
+                                            break;
+                                    }
+                                } catch (ParseException e) {
+                                    logger.warning("Received illegal response :" + responseContent);
+
+                                }
+
+                            } catch (SocketTimeoutException e) {
+                                logger.info("[*] " + currentThreadName + " receive timeout: " + e.getMessage());
+                            }
+
                             logger.info("[*] tried " + actionRequestTimes + " times.");
 
                             action.updateAction(actionJson);

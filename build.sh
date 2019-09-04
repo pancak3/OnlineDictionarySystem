@@ -42,6 +42,7 @@ jar --create \
   -C $UDPCLIENT_PATH UDPClient.class \
   -C $UDPCLIENT_PATH UDPClient\$User.class \
   -C $UDPCLIENT_PATH UDPClient\$Sender.class \
+  -C $UDPCLIENT_PATH UDPClient\$SingleClient.class \
   -C $UDPCLIENT_PATH UDPClient\$Action.class
 echo -e "done."
 
