@@ -20,8 +20,10 @@ public class UDPClient {
     private final static String UDP_SERVER_ADDR = "localhost";
     private final static int UDP_SERVER_PORT = 7397;
 
-    private final static int REQUEST_SEND_CYCLE_MILLIS = 100;
-    private final static int MAX_SEND_TIMES = 30;
+    private final static int REQUEST_SEND_CYCLE_MILLIS = 300;
+    private final static int MAX_SEND_TIMES = 10;
+
+    private final static int RESPONSE_RECEIVE_TIMEOUT_MILLIS = 10000;
 
     private final static JSONObject requestJson = (JSONObject) new JSONObject();
 
@@ -70,6 +72,7 @@ public class UDPClient {
         temJson.put("wordName", "banana");
         userInputJson.put("data", temJson);
         userInputJson.put("action", "query");
+        userInputJson.put("timestamp", System.currentTimeMillis());
         mainSingleClient.action.updateAction(userInputJson);
         mainSingleClient.run();
 
@@ -81,75 +84,119 @@ public class UDPClient {
         private final static Logger logger = Logger.getLogger("SingleClient-" + currentThreadName);
         private final Action action = new Action();
         private final JSONParser parser = new JSONParser();
+        private boolean wasRequestReceived = false;
 
         public void run() {
             logger.info("[*] Running SingleClient-" + currentThreadName);
             try {
                 DatagramSocket singleClientSocket = new DatagramSocket();
+                singleClientSocket.setSoTimeout(REQUEST_SEND_CYCLE_MILLIS);
+
                 JSONObject actionJson = this.action.getAction();
                 int actionRequestTimes = Integer.parseInt(actionJson.get("requestTimes").toString());
 
+                //make sure request was received by UDPServer
                 while (actionRequestTimes <= MAX_SEND_TIMES) {
 
                     actionJson = this.action.getAction();
                     actionRequestTimes = Integer.parseInt(actionJson.get("requestTimes").toString());
-                    long actionTimestamp = Long.parseLong(actionJson.get("timestamp").toString());
-                    long nowTimestamp = System.currentTimeMillis();
-                    if (actionJson.containsKey("action") && nowTimestamp - actionTimestamp > REQUEST_SEND_CYCLE_MILLIS) {
+                    try {
+                        JSONObject requestJson = (JSONObject) new JSONObject();
+                        requestJson.put("action", actionJson.get("action").toString());
+                        requestJson.put("data", actionJson.get("data").toString());
+
+                        String requestString = requestJson.toJSONString();
+                        byte[] requestBytes = requestString.getBytes();
+
+                        DatagramPacket requestPacket = new DatagramPacket(requestBytes, requestBytes.length, InetAddress.getByName(UDP_SERVER_ADDR), UDP_SERVER_PORT);
+
+                        if (!wasRequestReceived) {
+                            singleClientSocket.send(requestPacket);
+                        }
+
+                        //set receive time out
+
+                        byte[] buffer = new byte[1024];
+                        DatagramPacket responsePacket = new DatagramPacket(buffer, buffer.length);
+
 
                         try {
-                            JSONObject requestJson = (JSONObject) new JSONObject();
-
-                            requestJson.put("action", actionJson.get("action").toString());
-                            requestJson.put("data", actionJson.get("data").toString());
-
-                            String requestString = requestJson.toJSONString();
-                            byte[] requestBytes = requestString.getBytes();
-                            DatagramPacket requestPacket = new DatagramPacket(requestBytes, requestBytes.length, InetAddress.getByName(UDP_SERVER_ADDR), UDP_SERVER_PORT);
-                            singleClientSocket.send(requestPacket);
-//                            logger.info("[*] Sent :" + requestString + " with hashCode:" + requestString.hashCode());
-                            //set receive time out
-                            singleClientSocket.setSoTimeout(REQUEST_SEND_CYCLE_MILLIS);
-                            byte[] buffer = new byte[1024];
-                            DatagramPacket responsePacket = new DatagramPacket(buffer, buffer.length);
-
+                            singleClientSocket.receive(responsePacket);
+                            String responseContent = new String(responsePacket.getData()).substring(0, responsePacket.getLength());
 
                             try {
-                                singleClientSocket.receive(responsePacket);
-                                String responseContent = new String(responsePacket.getData()).substring(0, requestPacket.getLength());
-                                System.out.println("[-] Got response from server: " + responseContent);
-
-                                try {
-                                    JSONObject responseJson = (JSONObject) parser.parse(responseContent);
+                                JSONObject responseJson = (JSONObject) parser.parse(responseContent);
+                                if (responseJson.containsKey("status")) {
                                     String requestStatus = (String) responseJson.get("status").toString();
                                     switch (requestStatus) {
                                         case "received":
-                                            logger.info("[*] request arrived.");
+                                            logger.info("[*] request received by UDPServer");
+                                            this.wasRequestReceived = true;
                                             break;
                                         case "success":
                                             logger.info("[*] request success.");
-                                            actionJson.put("requestTimes", MAX_SEND_TIMES + 1);
+
+                                            //send UDPServer response received confirmation
+                                            JSONObject confirmationJson = (JSONObject) new JSONObject();
+                                            JSONObject confirmationDataJson = (JSONObject) new JSONObject();
+                                            confirmationDataJson.put("requestHashCode", responseJson.get("requestHashCode"));
+                                            confirmationJson.put("action", "confirm");
+                                            confirmationJson.put("data", confirmationDataJson);
+
+                                            String confirmationContent = confirmationJson.toJSONString();
+
+                                            byte[] confirmationBytes = confirmationContent.getBytes();
+                                            DatagramPacket confirmationPacket = new DatagramPacket(confirmationBytes, confirmationBytes.length, InetAddress.getByName(UDP_SERVER_ADDR), UDP_SERVER_PORT);
+
+                                            singleClientSocket.send(confirmationPacket);
+                                            handleResponse(responseJson);
+
+                                            actionRequestTimes = MAX_SEND_TIMES + 1;
+                                            action.clearAction();
                                             break;
                                     }
-                                } catch (ParseException e) {
-                                    logger.warning("Received illegal response :" + responseContent);
-
                                 }
 
-                            } catch (SocketTimeoutException e) {
-                                logger.info("[*] " + currentThreadName + " receive timeout: " + e.getMessage());
+
+                            } catch (ParseException e) {
+                                logger.warning("Received illegal response :" + responseContent);
+
                             }
 
-                            logger.info("[*] tried " + actionRequestTimes + " times.");
-
-                            action.updateAction(actionJson);
-
-                        } catch (IOException e) {
-                            logger.warning("Error while responding: " + e.getMessage());
+                        } catch (SocketTimeoutException e) {
+                            logger.info("[*] " + currentThreadName + " receive timeout: " + e.getMessage());
                         }
 
+//                        logger.info("[*] tried " + actionRequestTimes + " times.");
+
+                        action.updateAction(actionJson);
+
+                    } catch (IOException e) {
+                        logger.warning("Error while responding: " + e.getMessage());
                     }
+
                 }
+
+
+//                singleClientSocket.setSoTimeout(RESPONSE_RECEIVE_TIMEOUT_MILLIS);
+//                try {
+//                    JSONObject responseJson = (JSONObject) parser.parse(responseContent);
+//                    String requestStatus = (String) responseJson.get("status").toString();
+//                    switch (requestStatus) {
+//                        case "received":
+//                            logger.info("[*] request arrived.");
+//                            actionJson.put("requestTimes", MAX_SEND_TIMES + 1);
+//                            break;
+//                        case "success":
+//                            logger.info("[*] request success.");
+//                            actionJson.put("requestTimes", MAX_SEND_TIMES + 1);
+//                            handleResponse(responseJson);
+//                            break;
+//                    }
+//                } catch (ParseException e) {
+//                    logger.warning("Received illegal response :" + responseContent);
+//
+//                }
                 singleClientSocket.close();
 
 
@@ -158,6 +205,9 @@ public class UDPClient {
             }
         }
 
+        public void handleResponse(JSONObject responseJson) {
+            logger.info("[*] Handling response: " + responseJson.toJSONString());
+        }
     }
 
 }

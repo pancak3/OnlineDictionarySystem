@@ -17,7 +17,7 @@ import org.json.simple.parser.ParseException;
 public class UDPServer {
     private final static int UDP_PORT = 7397;
     private final static int QUEUE_SIZE = 42;
-    private final static int HANDLER_POOL_SIZE = 10;
+    private final static int HANDLER_POOL_SIZE = 1;
     private final static int CONFIRMOR_POOL_SIZE = 10;
     private final static int TASK_RESPOND_CYCLE_MILLIS = 100;
     private final static int MAX_RESPOND_TIMES = 30;
@@ -62,12 +62,12 @@ public class UDPServer {
                 // start confirmor pool
                 new Thread(new Confirmor(), "Confirmor-").start();
                 //start responder
-//                new Thread(new Responder(), "Responder-").start();
+                new Thread(new Responder(), "Responder-").start();
 
                 // start handler pool
-//                for (int i = 0; i < HANDLER_POOL_SIZE; i++) {
-//                    new Thread(new Handler(), "Handler-" + i).start();
-//                }
+                for (int i = 0; i < HANDLER_POOL_SIZE; i++) {
+                    new Thread(new Handler(), "Handler-" + i).start();
+                }
 
                 while (true) {
                     byte[] receiveData = new byte[1024];
@@ -106,26 +106,18 @@ public class UDPServer {
                     InetAddress clientAddressUDP = requestPacket.getAddress();
                     int clientPortUDP = requestPacket.getPort();
                     String requestContent = new String(requestPacket.getData()).substring(0, requestPacket.getLength());
+
                     JSONObject respondJson = (JSONObject) new JSONObject();
-                    respondJson.put("requestHashCode", requestContent.hashCode());
                     byte[] responseBytes;
+
                     DatagramPacket responsePacket;
                     try {
                         //handle request
-//                        requestContent = "{\"action\":\"query\",\"data\":{\"wordName\":\"banana\"}}";
 
-
-                        respondJson.put("respondData", handleRequest(requestContent));
                         logger.info("Handling: " + requestContent);
-                        respondJson.put("status", "success");
-                        String respondContent = respondJson.toString();
-                        responseBytes = respondContent.getBytes();
+                        handleRequest(requestPacket);
 
-                        //Create a send Datagram packet and send through socket
-                        responsePacket = new DatagramPacket(responseBytes, responseBytes.length, clientAddressUDP, clientPortUDP);
-                        ResponseTask respondTask = new ResponseTask(responsePacket, System.currentTimeMillis(), 0);
-                        respondTask.respondPacket = responsePacket;
-                        respondQueue.put(respondTask);
+
                     } catch (ParseException e) {
                         respondJson.put("respondData", "Illegal request.");
                         respondJson.put("status", "failed");
@@ -149,68 +141,101 @@ public class UDPServer {
             }
         }
 
-        private static JSONObject handleRequest(String requestContent) throws ParseException {
+        private static void handleRequest(DatagramPacket requestPacket) throws ParseException {
+            JSONParser parser = new JSONParser();
+
+
+            String requestContent = new String(requestPacket.getData()).substring(0, requestPacket.getLength());
+
             JSONObject requestJSON;
             try {
-                JSONParser parser = new JSONParser();
                 requestJSON = (JSONObject) parser.parse(requestContent);
+
                 if (requestJSON.containsKey("action") && requestJSON.containsKey("data")) {
                     //requestJSON.get("action") without (String) is not allowed
                     //I should learn more Java
                     //need to understand the principle of this
                     String action = (String) requestJSON.get("action");
-
-                    //I jump, who else?
                     JSONObject data = (JSONObject) parser.parse(requestJSON.get("data").toString());
+
+                    JSONObject respondJson = (JSONObject) new JSONObject();
+                    InetAddress clientAddressUDP = requestPacket.getAddress();
+                    int clientPortUDP = requestPacket.getPort();
+
+                    byte[] responseBytes;
+                    String hashString = requestJSON.toJSONString() + String.valueOf(System.currentTimeMillis());
+                    respondJson.put("requestHashCode", hashString.hashCode());
 
                     //each should check and put status in confirmationQueue
                     switch (action) {
                         case "query":
                             if (data.containsKey("wordName")) {
-                                return query(data);
+                                respondJson.put("data", query(data));
+                                respondJson.put("status", "success");
                             } else {
                                 throw new ParseException(-1);
                             }
+                            break;
                         case "add":
                             if (data.containsKey("wordName") && data.containsKey("wordType") && data.containsKey("meaning")) {
-                                return add(data);
+
+                                respondJson.put("data", add(data));
+                                respondJson.put("status", "success");
                             } else {
                                 throw new ParseException(-1);
                             }
+                            break;
+
                         case "edit":
                             if (data.containsKey("idx") && data.containsKey("wordName") && data.containsKey("wordType") && data.containsKey("meaning")) {
-                                return edit(data);
+                                respondJson.put("data", edit(data));
+                                respondJson.put("status", "success");
+
                             } else {
                                 throw new ParseException(-1);
                             }
+                            break;
+
                         case "remove":
                             if (data.containsKey("idx") && data.containsKey("wordName")) {
-                                return remove(data);
+                                respondJson.put("data", remove(data));
                             } else {
                                 throw new ParseException(-1);
                             }
-                        case "confirmation":
-                            if (data.containsKey("respondHash")) {
-                                return addConfirmation(data);
-                            } else {
-                                throw new ParseException(-1);
+                            break;
+
+                        case "confirm":
+                            if (data.containsKey("requestHashCode")) {
+                                respondConfirmationList.add(data.get("requestHashCode").toString());
                             }
+                            break;
+
                     }
+
+                    if (respondJson.containsKey("data")) {
+                        String respondContent = respondJson.toString();
+                        responseBytes = respondContent.getBytes();
+                        //Create a send Datagram packet and send through socket
+                        DatagramPacket responsePacket = new DatagramPacket(responseBytes, responseBytes.length, clientAddressUDP, clientPortUDP);
+
+                        ResponseTask respondTask = new ResponseTask(responsePacket, System.currentTimeMillis(), 0);
+                        respondTask.respondPacket = responsePacket;
+                        respondQueue.put(respondTask);
+                    }
+
                 } else {
                     throw new ParseException(-1);
                 }
 
-            } catch (ParseException e) {
+            } catch (ParseException | InterruptedException e) {
                 if (e.getMessage() == null) {
                     logger.warning("Illegal request: " + requestContent);
 
                 } else {
                     logger.warning(e.getMessage());
                 }
-                throw e;
 
             }
-            return requestJSON;
         }
 
         private static JSONObject query(JSONObject data) throws ParseException {
@@ -263,11 +288,6 @@ public class UDPServer {
             }
         }
 
-        private static JSONObject addConfirmation(JSONObject data) {
-            String respondHash = data.get("respondHash").toString();
-            respondConfirmationList.add(respondHash);
-            return new JSONObject();
-        }
     }
 
     static class Confirmor implements Runnable {
@@ -289,9 +309,8 @@ public class UDPServer {
 
                     JSONObject confirmationJson = new JSONObject();
                     String requestContent = new String(requestPacket.getData()).substring(0, requestPacket.getLength());
-                    logger.info("[*] Received :" + requestContent);
+
                     confirmationJson.put("status", "received");
-                    confirmationJson.put("requestHashCode", requestContent.hashCode());
                     byte[] confirmationBytes = confirmationJson.toJSONString().getBytes();
                     //Create a send Datagram packet and send through socket
                     DatagramPacket confirmationPacket = new DatagramPacket(confirmationBytes, confirmationBytes.length, clientAddressUDP, clientPortUDP);
