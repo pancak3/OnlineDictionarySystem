@@ -24,7 +24,7 @@ public class UDPClient {
     private final static int UDP_SERVER_PORT = 7397;
 
     private final static int REQUEST_SEND_CYCLE_MILLIS = 100;
-    private final static int MAX_SEND_TIMES = 1;
+    private final static int MAX_SEND_TIMES = 30;
 
     private final static JSONObject requestJson = (JSONObject) new JSONObject();
 
@@ -91,8 +91,7 @@ public class UDPClient {
                 JSONObject actionJson = this.action.getAction();
                 int actionRequestTimes = Integer.parseInt(actionJson.get("requestTimes").toString());
 
-                while (actionRequestTimes < MAX_SEND_TIMES) {
-                    logger.info("[*] tried " + actionRequestTimes + " times.");
+                while (actionRequestTimes <= MAX_SEND_TIMES) {
 
                     actionJson = this.action.getAction();
                     actionRequestTimes = Integer.parseInt(actionJson.get("requestTimes").toString());
@@ -110,6 +109,8 @@ public class UDPClient {
                             byte[] requestBytes = requestString.getBytes();
                             DatagramPacket requestPacket = new DatagramPacket(requestBytes, requestBytes.length, InetAddress.getByName(UDP_SERVER_ADDR), UDP_SERVER_PORT);
                             singleClientSocket.send(requestPacket);
+                            logger.info("[*] tried " + actionRequestTimes + " times.");
+
                             action.updateAction(actionJson);
 
                         } catch (IOException e) {
@@ -119,6 +120,7 @@ public class UDPClient {
                     }
                 }
                 singleClientSocket.close();
+
 
             } catch (SocketException e) {
                 logger.warning("Failed to start SingleClient-" + currentThreadName + ": " + e.getMessage());
