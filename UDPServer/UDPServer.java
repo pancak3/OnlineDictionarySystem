@@ -21,6 +21,7 @@ public class UDPServer {
     private final static int CONFIRMOR_POOL_SIZE = 10;
     private final static int TASK_RESPOND_CYCLE_MILLIS = 100;
     private final static int MAX_RESPOND_TIMES = 30;
+    private final static int MAX_BUFFER_SIZE = 10240;
 
     static class ResponseTask {
         DatagramPacket respondPacket;
@@ -70,7 +71,7 @@ public class UDPServer {
                 }
 
                 while (true) {
-                    byte[] receiveData = new byte[1024];
+                    byte[] receiveData = new byte[MAX_BUFFER_SIZE];
                     // Create a receive Datagram packet and receive through socket
                     DatagramPacket requestPacket = new DatagramPacket(receiveData, receiveData.length);
 
@@ -171,25 +172,22 @@ public class UDPServer {
                         case "query":
                             if (data.containsKey("wordName")) {
                                 respondJson.put("data", query(data));
-                                respondJson.put("status", "success");
                             } else {
                                 throw new ParseException(-1);
                             }
                             break;
                         case "add":
-                            if (data.containsKey("wordName") && data.containsKey("wordType") && data.containsKey("meaning")) {
+                            if (data.containsKey("wordName") && data.containsKey("wordType") && data.containsKey("wordMeaning")) {
 
                                 respondJson.put("data", add(data));
-                                respondJson.put("status", "success");
                             } else {
                                 throw new ParseException(-1);
                             }
                             break;
 
                         case "edit":
-                            if (data.containsKey("idx") && data.containsKey("wordName") && data.containsKey("wordType") && data.containsKey("meaning")) {
+                            if (data.containsKey("idx") && data.containsKey("wordName") && data.containsKey("wordType") && data.containsKey("wordMeaning")) {
                                 respondJson.put("data", edit(data));
-                                respondJson.put("status", "success");
 
                             } else {
                                 throw new ParseException(-1);
@@ -197,7 +195,7 @@ public class UDPServer {
                             break;
 
                         case "remove":
-                            if (data.containsKey("idx") && data.containsKey("wordName")) {
+                            if (data.containsKey("idx")) {
                                 respondJson.put("data", remove(data));
                             } else {
                                 throw new ParseException(-1);
@@ -213,6 +211,8 @@ public class UDPServer {
                     }
 
                     if (respondJson.containsKey("data")) {
+                        respondJson.put("status", "success");
+
                         String respondContent = respondJson.toString();
                         responseBytes = respondContent.getBytes();
                         //Create a send Datagram packet and send through socket
@@ -266,9 +266,9 @@ public class UDPServer {
             String idx = data.get("idx").toString();
             String wordName = data.get("wordName").toString();
             String wordType = data.get("wordType").toString();
-            String meaning = data.get("meaning").toString();
+            String wordMeaning = data.get("wordMeaning").toString();
             try {
-                return db.editWord(Integer.parseInt(idx), wordName, wordType, meaning);
+                return db.editWord(Integer.parseInt(idx), wordName, wordType, wordMeaning);
             } catch (SQLException e) {
                 logger.warning(Thread.currentThread().getName() + " while editing " + wordName + e.getMessage());
                 //err or no word match in database

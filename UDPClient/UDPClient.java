@@ -22,6 +22,8 @@ public class UDPClient {
 
     private final static int REQUEST_SEND_CYCLE_MILLIS = 300;
     private final static int MAX_SEND_TIMES = 10;
+    private final static int MAX_BUFFER_SIZE = 10240;
+
 
     private final static int RESPONSE_RECEIVE_TIMEOUT_MILLIS = 10000;
 
@@ -69,9 +71,30 @@ public class UDPClient {
         SingleClient mainSingleClient = new SingleClient();
         JSONObject temJson = new JSONObject();
         JSONObject userInputJson = new JSONObject();
+        //add test
+//        temJson.put("wordName", "banana");
+//        temJson.put("wordType", "noun");
+//        temJson.put("wordMeaning", "555555");
+//        userInputJson.put("data", temJson);
+//        userInputJson.put("action", "add");
+//        //query test
         temJson.put("wordName", "banana");
         userInputJson.put("data", temJson);
         userInputJson.put("action", "query");
+
+        //edit test
+//        temJson.put("wordName", "banana");
+//        temJson.put("wordType", "noun");
+//        temJson.put("wordMeaning", "777777");
+//        temJson.put("idx", "20");
+//        userInputJson.put("data", temJson);
+//        userInputJson.put("action", "edit");
+
+        //remove test
+//        temJson.put("idx", "20");
+//        userInputJson.put("data", temJson);
+//        userInputJson.put("action", "remove");
+
         userInputJson.put("timestamp", System.currentTimeMillis());
         mainSingleClient.action.updateAction(userInputJson);
         mainSingleClient.run();
@@ -116,7 +139,7 @@ public class UDPClient {
 
                         //set receive time out
 
-                        byte[] buffer = new byte[1024];
+                        byte[] buffer = new byte[MAX_BUFFER_SIZE];
                         DatagramPacket responsePacket = new DatagramPacket(buffer, buffer.length);
 
 
@@ -153,6 +176,7 @@ public class UDPClient {
 
                                             actionRequestTimes = MAX_SEND_TIMES + 1;
                                             action.clearAction();
+                                            System.exit(0);
                                             break;
                                     }
                                 }
@@ -163,40 +187,20 @@ public class UDPClient {
 
                             }
 
-                        } catch (SocketTimeoutException e) {
-                            logger.info("[*] " + currentThreadName + " receive timeout: " + e.getMessage());
+                        } catch (SocketTimeoutException ignored) {
+
                         }
-
-//                        logger.info("[*] tried " + actionRequestTimes + " times.");
-
                         action.updateAction(actionJson);
+
 
                     } catch (IOException e) {
                         logger.warning("Error while responding: " + e.getMessage());
                     }
 
+
                 }
 
-
-//                singleClientSocket.setSoTimeout(RESPONSE_RECEIVE_TIMEOUT_MILLIS);
-//                try {
-//                    JSONObject responseJson = (JSONObject) parser.parse(responseContent);
-//                    String requestStatus = (String) responseJson.get("status").toString();
-//                    switch (requestStatus) {
-//                        case "received":
-//                            logger.info("[*] request arrived.");
-//                            actionJson.put("requestTimes", MAX_SEND_TIMES + 1);
-//                            break;
-//                        case "success":
-//                            logger.info("[*] request success.");
-//                            actionJson.put("requestTimes", MAX_SEND_TIMES + 1);
-//                            handleResponse(responseJson);
-//                            break;
-//                    }
-//                } catch (ParseException e) {
-//                    logger.warning("Received illegal response :" + responseContent);
-//
-//                }
+                logger.info("[*] " + currentThreadName + " receive timeout ");
                 singleClientSocket.close();
 
 
