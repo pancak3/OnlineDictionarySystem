@@ -2,10 +2,28 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="591b90a6-2b0f-4241-8ab1-1d4e1229667e" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/artifacts/COMP90015_2019_SM2_Distributed_Systems_Assignment1_jar.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/dictionaries/q.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/libraries/json_simple_1_1_1.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/README.MD" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/System Architecture .pdf" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/UDPClient/MANIFEST.MF" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/UDPClient/UDPClient.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/UDPServer/MANIFEST.MF" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/UDPServer/UDPServer.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/bin/SQLite" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/bin/json-simple-1.1.1.jar" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/build.sh" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/sqlite_jdbc_3_27_2_1.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/libraries/sqlite_jdbc_3_27_2_1.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/COMP90015_2019_SM2-Distributed-Systems-Assignment1/server.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/COMP90015_2019_SM2-Distributed-Systems-Assignment1.iml" beforeDir="false" afterPath="$PROJECT_DIR$/COMP90015_2019_SM2-Distributed-Systems-Assignment1.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/sqlite-jdbc-3.27.2.1.jar" beforeDir="false" afterPath="$PROJECT_DIR$/bin/sqlite-jdbc-3.27.2.1.jar" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/resources/SQLite" beforeDir="false" afterPath="$PROJECT_DIR$/resources/SQLite" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Server.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/VirtualDB.java" beforeDir="false" afterPath="$PROJECT_DIR$/UDPServer/Database/Database.java" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -153,6 +171,7 @@
       <workItem from="1566031788461" duration="202000" />
       <workItem from="1566041860647" duration="7912000" />
       <workItem from="1566097683051" duration="10258000" />
+      <workItem from="1567656638982" duration="23000" />
     </task>
     <servers />
   </component>

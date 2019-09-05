@@ -1,2 +1,7 @@
 out
-idea
+bin/UDP*.jar
+.idea/workspace.xml
+UDPServer/*.class
+UDPServer/Database/*.class
+UDPClient/*.class
+null
