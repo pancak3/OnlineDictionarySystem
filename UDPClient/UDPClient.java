@@ -18,7 +18,7 @@ import javax.swing.*;
 @SuppressWarnings("unchecked")
 
 public class UDPClient {
-    private final static String UDP_SERVER_ADDR = "localhost";
+    private final static String UDP_SERVER_ADDR = "127.0.0.1";
     private final static int UDP_SERVER_PORT = 7397;
 
     private final static int REQUEST_SEND_CYCLE_MILLIS = 100;
@@ -366,6 +366,7 @@ public class UDPClient {
                 }
                 if (!wasRequestSuccess) {
                     logger.info("[*] " + currentThreadName + " receive timeout ");
+                    System.out.println("[*] Request timeout.");
                     stressTestingFailedNum.set(stressTestingFailedNum.get() + 1);
                 } else {
                     stressTestingSuccessNum.set(stressTestingSuccessNum.get() + 1);
@@ -388,9 +389,8 @@ public class UDPClient {
                     if (responseJson.get("data").toString().length() > 2) {
                         System.out.println("[*] Success! Results are in Json format:");
                         System.out.println(responseJson.get("data").toString());
-
                     } else {
-                        System.out.println("[*] Success! Bye.");
+                        System.out.println("[*] Request successfully bu no result found.");
                     }
                 }
             }
