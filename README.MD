@@ -20,3 +20,4 @@ back to workplace
 ```aidl
     cd ../
 ```    
+![alt text](https://github.com/pancak3/COMP90015_2019_SM2-Distributed-Systems-Assignment1/blob/master/UDPServer%20Architecture.png)
