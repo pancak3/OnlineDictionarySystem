@@ -58,7 +58,7 @@ public class UDPServer {
         System.out.println("[*] Welcome to UDPServer.");
         System.out.println("    UDPServer terminal provides two modes -> \"Normal\" and \"Debug\".\r\n");
         System.out.println("    Normal: Run with default config; Only warning logs.");
-        System.out.println("    Debug: Set configs; Fully logs.\r\n");
+        System.out.println("    Debug: Set configs; Full logs.\r\n");
         System.out.print("Do you prefer \"Normal\"?(y/n): ");
 
         boolean inputIllegal = false;
@@ -157,7 +157,6 @@ public class UDPServer {
             }
         }
     }
-
 
     static class Handler implements Runnable {
         private final static Logger logger = Logger.getLogger("Handler");
