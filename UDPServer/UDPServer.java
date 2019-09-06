@@ -26,7 +26,7 @@ public class UDPServer {
     private static int CONFIRMOR_POOL_SIZE = 5;
     private static int RESPONDER_POOL_SIZE = 5;
     private final static int TASK_RESPOND_CYCLE_MILLIS = 100;
-    private final static int MAX_RESPOND_TIMES = 100;
+    private final static int MAX_RESPOND_TIMES = 10;
     private final static int MAX_BUFFER_SIZE = 10240;
     private static boolean IS_DEBUG = false;
 

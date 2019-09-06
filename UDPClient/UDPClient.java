@@ -21,8 +21,8 @@ public class UDPClient {
     private final static String UDP_SERVER_ADDR = "127.0.0.1";
     private final static int UDP_SERVER_PORT = 7397;
 
-    private final static int REQUEST_SEND_CYCLE_MILLIS = 100;
-    private final static int MAX_SEND_TIMES = 100;
+    private final static int REQUEST_SEND_CYCLE_MILLIS = 200;
+    private final static int MAX_SEND_TIMES = 200;
     private final static int MAX_BUFFER_SIZE = 10240;
     private static boolean IS_DEBUG = false;
 
