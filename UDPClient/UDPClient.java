@@ -21,10 +21,11 @@ public class UDPClient {
     private final static String UDP_SERVER_ADDR = "127.0.0.1";
     private final static int UDP_SERVER_PORT = 7397;
 
-    private final static int REQUEST_SEND_CYCLE_MILLIS = 200;
-    private final static int MAX_SEND_TIMES = 200;
+    private final static int REQUEST_SEND_CYCLE_MILLIS = 100;
+    private final static int MAX_SEND_TIMES = 50;
     private final static int MAX_BUFFER_SIZE = 10240;
     private static boolean IS_DEBUG = false;
+    private static String ACTION = null;
 
 
     private static AtomicReference<Integer> stressTestingSuccessNum = new AtomicReference<Integer>();
@@ -84,179 +85,150 @@ public class UDPClient {
                 IS_DEBUG = true;
                 inputIllegal = true;
                 break;
+            } else {
+                if (i == 4) {
+                    System.out.println("[*] Tried too many times, bye.");
+                    System.exit(0);
+                } else {
+                    System.out.print("Do you prefer \"Normal\"?(y/n): ");
+
+                }
             }
 
         }
-        if (inputIllegal) {
-            String mode;
-            if (IS_DEBUG) {
-                mode = "(debug): ";
-            } else {
-                mode = "(normal): ";
-            }
-            String usage = "    Usage:\n          Simply input $commands, and then follow the instructions.\n          $commands include {Normal: .add .query .edit .remove .exit}";
-            System.out.print(usage);
-            if (IS_DEBUG) {
-                System.out.println("+{Debug: .stressTest}");
 
-            } else {
-                System.out.println(" ");
+        String mode;
+        if (IS_DEBUG) {
+            mode = "(debug): ";
+        } else {
+            mode = "(normal): ";
+        }
+        String usage = "    Usage:\n          Simply input $commands, and then follow the instructions.\n          $commands include {Normal: .add .query .edit .remove .exit}";
+        System.out.print(usage);
+        if (IS_DEBUG) {
+            System.out.println("+{Debug: .stressTest}");
 
-            }
-            System.out.print(mode);
+        } else {
+            System.out.println(" ");
 
-            JSONObject temJson = new JSONObject();
-            JSONObject userInputJson = new JSONObject();
+        }
+        System.out.print(mode);
+
+        JSONObject temJson = new JSONObject();
+        JSONObject userInputJson = new JSONObject();
 
 //            while (true) {
 
 
-            input = inputScanner.nextLine();
-            boolean isAction = true;
-            int runtimes = 1;
-            switch (input) {
-                case ".add":
-                    System.out.print(mode + "wordName-> ");
-                    input = inputScanner.nextLine();
-                    temJson.put("wordName", input);
+        input = inputScanner.nextLine();
+        boolean isAction = true;
+        int runtimes = 1;
+        switch (input) {
+            case ".add":
+                System.out.print(mode + "wordName-> ");
+                input = inputScanner.nextLine();
+                temJson.put("wordName", input);
 
-                    System.out.print(mode + "wordType-> ");
-                    input = inputScanner.nextLine();
-                    temJson.put("wordType", input);
+                System.out.print(mode + "wordType-> ");
+                input = inputScanner.nextLine();
+                temJson.put("wordType", input);
 
-                    System.out.print(mode + "wordMeaning-> ");
+                System.out.print(mode + "wordMeaning-> ");
+                input = inputScanner.nextLine();
+                temJson.put("wordMeaning", input);
+
+                userInputJson.put("data", temJson);
+                userInputJson.put("action", "add");
+                break;
+
+            case ".query":
+                System.out.print(mode + "wordName-> ");
+                input = inputScanner.nextLine();
+                temJson.put("wordName", input);
+
+                userInputJson.put("data", temJson);
+                userInputJson.put("action", "query");
+                break;
+
+            case ".edit":
+
+                System.out.print(mode + "idx-> ");
+                input = inputScanner.nextLine();
+                temJson.put("idx", input);
+                System.out.print(mode + "wordName-> ");
+                input = inputScanner.nextLine();
+                temJson.put("wordName", input);
+
+                System.out.print(mode + "wordType-> ");
+                input = inputScanner.nextLine();
+                temJson.put("wordType", input);
+
+                System.out.print(mode + "wordMeaning-> ");
+                input = inputScanner.nextLine();
+                temJson.put("wordMeaning", input);
+
+                userInputJson.put("data", temJson);
+                userInputJson.put("action", "edit");
+                break;
+
+            case ".remove":
+                System.out.print(mode + "idx-> ");
+                input = inputScanner.nextLine();
+
+                temJson.put("idx", input);
+                userInputJson.put("data", temJson);
+                userInputJson.put("action", "remove");
+                break;
+
+            case ".exit":
+                isAction = false;
+
+                System.out.println("[*] Bye.");
+                System.exit(0);
+                break;
+
+            case ".modeSwitch":
+                isAction = false;
+                IS_DEBUG = !IS_DEBUG;
+                break;
+
+            case ".stressTest":
+                if (IS_DEBUG) {
+                    System.out.print(mode + "How many clients do you want? -> ");
                     input = inputScanner.nextLine();
-                    temJson.put("wordMeaning", input);
+
+
+                    temJson.put("wordName", "TEST");
+                    temJson.put("wordType", "TEST");
+                    temJson.put("wordMeaning", "TEST");
 
                     userInputJson.put("data", temJson);
                     userInputJson.put("action", "add");
-                    break;
 
-                case ".query":
-                    System.out.print(mode + "wordName-> ");
-                    input = inputScanner.nextLine();
-                    temJson.put("wordName", input);
-
-                    userInputJson.put("data", temJson);
-                    userInputJson.put("action", "query");
-                    break;
-
-                case ".edit":
-
-                    System.out.print(mode + "idx-> ");
-                    input = inputScanner.nextLine();
-                    temJson.put("idx", input);
-                    System.out.print(mode + "wordName-> ");
-                    input = inputScanner.nextLine();
-                    temJson.put("wordName", input);
-
-                    System.out.print(mode + "wordType-> ");
-                    input = inputScanner.nextLine();
-                    temJson.put("wordType", input);
-
-                    System.out.print(mode + "wordMeaning-> ");
-                    input = inputScanner.nextLine();
-                    temJson.put("wordMeaning", input);
-
-                    userInputJson.put("data", temJson);
-                    userInputJson.put("action", "edit");
-                    break;
-
-                case ".remove":
-                    System.out.print(mode + "idx-> ");
-                    input = inputScanner.nextLine();
-
-                    temJson.put("idx", input);
-                    userInputJson.put("data", temJson);
-                    userInputJson.put("action", "remove");
-                    break;
-
-                case ".exit":
-                    isAction = false;
-
-                    System.out.println("[*] Bye.");
-                    System.exit(0);
-                    break;
-
-                case ".modeSwitch":
-                    isAction = false;
-                    IS_DEBUG = !IS_DEBUG;
-                    break;
-
-                case ".stressTest":
-                    if (IS_DEBUG) {
-                        System.out.print(mode + "How many clients do you want? -> ");
-                        input = inputScanner.nextLine();
-
-
-                        temJson.put("wordName", "TEST");
-                        temJson.put("wordType", "TEST");
-                        temJson.put("wordMeaning", "TEST");
-
-                        userInputJson.put("data", temJson);
-                        userInputJson.put("action", "add");
-
-                        runtimes = Integer.parseInt(input);
-                    } else {
-                        System.out.println("[*] You are not in debug mode.");
-                    }
-
-
-                    break;
-
-                default:
-                    isAction = false;
-                    System.out.println("[*] command not found.");
-
-            }
-            if (isAction) {
-                stressTestingSuccessNum.set(0);
-                stressTestingFailedNum.set(0);
-                userInputJson.put("timestamp", System.currentTimeMillis());
-                SingleClient singleClient = new SingleClient(userInputJson);
-                for (int i = 0; i < runtimes; i++) {
-                    new Thread(singleClient, "SingleClient-Main").start();
-
+                    runtimes = Integer.parseInt(input);
+                } else {
+                    System.out.println("[*] You are not in debug mode.");
                 }
 
-            }
-//                System.out.print(usage);
-//                if (IS_DEBUG) {
-//                    System.out.println(" {Debug: .stressTest}");
-//
-//                } else {
-//                    System.out.println(" ");
-//
-//                }
-//                if (IS_DEBUG) {
-//                    mode = "(debug): ";
-//                } else {
-//                    mode = "(normal): ";
-//                }
-//                System.out.print(mode);
-//            }
 
-        } else {
-            System.out.println("[*] Too many times try, bye.");
+                break;
+
+            default:
+                isAction = false;
+                System.out.println("[*] command not found.");
+
         }
+        if (isAction) {
+            stressTestingSuccessNum.set(0);
+            stressTestingFailedNum.set(0);
+            userInputJson.put("timestamp", System.currentTimeMillis());
+            SingleClient singleClient = new SingleClient(userInputJson);
+            for (int i = 0; i < runtimes; i++) {
+                new Thread(singleClient, "SingleClient-Main").start();
 
+            }
 
-//        stressTestingSuccessNum.set(0);
-//        stressTestingFailedNum.set(0);
-//        for (int i = 0; i < 500; ++i) {
-//
-//
-//            //remove test
-////        temJson.put("idx", "20");
-////        userInputJson.put("data", temJson);
-////        userInputJson.put("action", "remove");
-//            userInputJson.put("timestamp", System.currentTimeMillis());
-//
-//            SingleClient singleClient = new SingleClient(userInputJson);
-//            new Thread(singleClient, "SingleClient-" + i).start();
-//        }
-////        mainSingleClient.run();
-
+        }
 
     }
 
@@ -336,10 +308,11 @@ public class UDPClient {
                                             DatagramPacket confirmationPacket = new DatagramPacket(confirmationBytes, confirmationBytes.length, InetAddress.getByName(UDP_SERVER_ADDR), UDP_SERVER_PORT);
 
                                             singleClientSocket.send(confirmationPacket);
-                                            handleResponse(responseJson);
+                                            handleResponse(responseJson, actionJson);
 
                                             actionRequestTimes = MAX_SEND_TIMES + 1;
                                             wasRequestSuccess = true;
+
                                             action.clearAction();
 //                                            System.exit(0);
                                             break;
@@ -372,7 +345,7 @@ public class UDPClient {
                     stressTestingSuccessNum.set(stressTestingSuccessNum.get() + 1);
                 }
 
-                logger.info("[*] Success: " + stressTestingSuccessNum.get() + " Failed: " + stressTestingFailedNum.get()+" ("+(Integer.parseInt(String.valueOf(stressTestingFailedNum.get()))+Integer.parseInt(String.valueOf(stressTestingSuccessNum.get())))+" UDPClients were created.)");
+                logger.info("[*] Success: " + stressTestingSuccessNum.get() + " Failed: " + stressTestingFailedNum.get() + " (" + (Integer.parseInt(String.valueOf(stressTestingFailedNum.get())) + Integer.parseInt(String.valueOf(stressTestingSuccessNum.get()))) + " UDPClients were created.)");
                 singleClientSocket.close();
 
 
@@ -381,19 +354,28 @@ public class UDPClient {
             }
         }
 
-        public void handleResponse(JSONObject responseJson) {
+        public void handleResponse(JSONObject responseJson, JSONObject actionJson) {
             logger.info("[*] SingleClient-" + currentThreadName + " is handling response: " + responseJson.toJSONString());
 
-            if (!IS_DEBUG) {
-                if (responseJson.containsKey("data")) {
+
+            if (responseJson.containsKey("data")) {
+                String requestAction = (String) actionJson.get("action");
+                System.out.print("[*] Successfully " + requestAction + "!");
+                if (requestAction == "query") {
                     if (responseJson.get("data").toString().length() > 2) {
-                        System.out.println("[*] Success! Results are in Json format:");
+                        System.out.print(" Results are in Json format:\n    ");
                         System.out.println(responseJson.get("data").toString());
                     } else {
-                        System.out.println("[*] Request successfully bu no result found.");
+                        System.out.print(" But there is no such word.\n");
                     }
+
+                } else {
+                    System.out.println("");
                 }
+            } else {
+                System.out.println("[*] Illegal request.");
             }
+
         }
 
         SingleClient(JSONObject actionJson) {
