@@ -5,4 +5,5 @@ UDPServer/*.class
 UDPServer/Database/*.class
 UDPClient/*.class
 null
-.idea/workspace.xml
+.idea/
+SQLite

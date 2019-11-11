@@ -28,7 +28,7 @@ jar --create \
   -C $UDPSERVER_PATH UDPServer\$Responder.class \
   -C $UDPSERVER_PATH UDPServer\$ResponseTask.class
 
-echo -e "done."
+echo "done."
 
 #compile UDPClient
 echo -e "[*] Compiling UDPClient ... \c"
@@ -44,6 +44,6 @@ jar --create \
   -C $UDPCLIENT_PATH UDPClient\$Sender.class \
   -C $UDPCLIENT_PATH UDPClient\$SingleClient.class \
   -C $UDPCLIENT_PATH UDPClient\$Action.class
-echo -e "done."
+echo "done."
 
 echo -e "\r\n[-] Note: Due to the use of Sqlite file, should always run UDPServer or UDPServer under \$Project_Path/bin/"
